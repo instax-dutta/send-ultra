@@ -1,4 +1,4 @@
-/* global DEFAULTS LIMITS WEB_UI PREFS */
+/* global BRAND DEFAULTS LIMITS WEB_UI PREFS */
 import 'core-js';
 import 'fast-text-encoding'; // MS Edge support
 import 'intl-pluralrules';
@@ -44,7 +44,7 @@ if (process.env.NODE_ENV === 'production') {
     }
   }
 
-  const translate = await getTranslator(locale());
+  const translate = await getTranslator(locale(), BRAND);
   setTranslate(translate);
   // eslint-disable-next-line require-atomic-updates
   window.initialState = {
@@ -52,6 +52,7 @@ if (process.env.NODE_ENV === 'production') {
     DEFAULTS,
     WEB_UI,
     PREFS,
+    brand: BRAND,
     archive: new Archive([], DEFAULTS.EXPIRE_SECONDS, DEFAULTS.DOWNLOADS),
     capabilities,
     translate,

@@ -1,4 +1,4 @@
-# [![Send](./assets/icon-64x64.png)](https://gitlab.com/timvisee/send/) Send
+# [![Send Ultra](./assets/icon-64x64.png)](https://github.com/timvisee/send) Send Ultra
 
 [![Build status on GitLab CI][gitlab-ci-master-badge]][gitlab-ci-link]
 [![Latest release][release-badge]][release-link]
@@ -13,12 +13,14 @@
 [release-link]: https://gitlab.com/timvisee/send/-/tags
 [repo-license-badge]: https://img.shields.io/github/license/timvisee/send.svg
 
-A fork of Mozilla's [Firefox Send][mozilla-send].
+A fork of Mozilla's [Firefox Send][mozilla-send], branded **Send Ultra**.
 Mozilla discontinued Send, this fork is a community effort to keep the project
 up-to-date and alive.
 
 - Forked [at][fork-commit] Mozilla's last publicly hosted version
 - _Mozilla_ & _Firefox_ branding [is][remove-branding-pr] removed so you can legally self-host
+- Modernised: runs on current Node.js, serves compressed assets, and has an
+  end-to-end test suite that proves files survive the round trip byte for byte
 - Kept compatible with [`ffsend`][ffsend] (CLI for Send)
 - Dependencies have been updated
 - Mozilla's [changes][mozilla-patches] since the fork have been selectively [merged][mozilla-patches-pr]

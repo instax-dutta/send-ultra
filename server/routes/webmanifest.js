@@ -1,11 +1,12 @@
 const state = require('../state');
+const config = require('../config');
 
 module.exports = async function(req, res) {
   const appState = await state(req);
 
   const manifest = {
-    name: 'Send',
-    short_name: 'Send',
+    name: config.custom_title,
+    short_name: config.custom_title,
     lang: req.language,
     icons: [
       {

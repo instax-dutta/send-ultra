@@ -1,20 +1,52 @@
 const config = require('./config');
 const layout = require('./layout');
 const assets = require('../common/assets');
-const getTranslator = require('./locale');
+const locale = require('./locale');
+const getTranslator = locale;
+const { setBrand } = locale;
 const { getFxaConfig } = require('./fxa');
 const fs = require('fs');
 const path = require('path');
 
+// Resolved once at load: these cannot change while the process runs, so
+// there is no reason to pay for a filesystem probe or a string build per
+// request.
+const customLocale = (() => {
+  if (
+    config.custom_locale !== '' &&
+    fs.existsSync(
+      path.join(__dirname, '../public/locales', config.custom_locale)
+    )
+  ) {
+    return config.custom_locale;
+  }
+  return '';
+})();
+
+function buildUiAssets(baseUrl) {
+  const uiAssets = {
+    android_chrome_192px: assets.get('android-chrome-192x192.png'),
+    android_chrome_512px: assets.get('android-chrome-512x512.png'),
+    apple_touch_icon: assets.get('apple-touch-icon.png'),
+    favicon_16px: assets.get('favicon-16x16.png'),
+    favicon_32px: assets.get('favicon-32x32.png'),
+    icon: assets.get('icon.svg'),
+    safari_pinned_tab: assets.get('safari-pinned-tab.svg'),
+    facebook: baseUrl + '/' + assets.get('send-fb.jpg'),
+    twitter: baseUrl + '/' + assets.get('send-twitter.jpg'),
+    wordmark: assets.get('wordmark.svg') + '#logo',
+    custom_css: ''
+  };
+  for (const key of Object.keys(uiAssets)) {
+    if (config.ui_custom_assets[key] !== '') {
+      uiAssets[key] = config.ui_custom_assets[key];
+    }
+  }
+  return uiAssets;
+}
+
 module.exports = async function(req) {
-  const locale = (() => {
-    if (config.custom_locale != '' && fs.existsSync(path.join(__dirname,'../public/locales',config.custom_locale))) {
-        return config.custom_locale;
-    }
-    else {
-      return req.language || 'en-US';
-    }
-  })();
+  const locale = customLocale || req.language || 'en-US';
   let authConfig = null;
   let robots = 'none';
   if (req.route && req.route.path === '/') {
@@ -33,23 +65,12 @@ module.exports = async function(req) {
     prefs.surveyUrl = config.survey_url;
   }
   const baseUrl = config.deriveBaseUrl(req);
-  const uiAssets = {
-    android_chrome_192px: assets.get('android-chrome-192x192.png'),
-    android_chrome_512px: assets.get('android-chrome-512x512.png'),
-    apple_touch_icon: assets.get('apple-touch-icon.png'),
-    favicon_16px: assets.get('favicon-16x16.png'),
-    favicon_32px: assets.get('favicon-32x32.png'),
-    icon: assets.get('icon.svg'),
-    safari_pinned_tab: assets.get('safari-pinned-tab.svg'),
-    facebook: baseUrl + '/' + assets.get('send-fb.jpg'),
-    twitter: baseUrl + '/' + assets.get('send-twitter.jpg'),
-    wordmark: assets.get('wordmark.svg') + '#logo',
-    custom_css: ''
-  };
-  Object.keys(uiAssets).forEach(index => {
-    if (config.ui_custom_assets[index] !== '')
-      uiAssets[index] = config.ui_custom_assets[index];
-  });
+  /*
+   * The locale bundles each hardcode the product name. Point them at the
+   * configured one so the copy in every language agrees with the wordmark,
+   * then hand out a translator for the requested locale.
+   */
+  setBrand(config.custom_title);
   return {
     archive: {
       numFiles: 0
@@ -57,6 +78,10 @@ module.exports = async function(req) {
     locale,
     capabilities: { account: false },
     translate: getTranslator(locale),
+    // A product name is a proper noun and must not be translated, so it comes
+    // from config rather than the locale bundle. The locale key stays as the
+    // fallback for anyone running their own translation.
+    brand: config.custom_title,
     title: config.custom_title,
     description: config.custom_description,
     baseUrl,
@@ -65,7 +90,7 @@ module.exports = async function(req) {
         primary: config.ui_color_primary,
         accent: config.ui_color_accent
       },
-      assets: uiAssets
+      assets: buildUiAssets(baseUrl)
     },
     storage: {
       files: []

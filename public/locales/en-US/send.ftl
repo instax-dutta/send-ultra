@@ -1,4 +1,4 @@
-title = Send
+title = Send Ultra
 importingFile = Importing…
 encryptingFile = Encrypting…
 decryptingFile = Decrypting…
@@ -46,7 +46,7 @@ passwordSetError = This password could not be set
 
 ## Send version 2 strings
 
--send-brand = Send
+-send-brand = Send Ultra
 -send-short-brand = Send
 -firefox = Firefox
 -mozilla = Mozilla

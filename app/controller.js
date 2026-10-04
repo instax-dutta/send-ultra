@@ -1,3 +1,4 @@
+/* global BRAND */
 import FileReceiver from './fileReceiver';
 import FileSender from './fileSender';
 import copyDialog from './ui/copyDialog';
@@ -37,7 +38,10 @@ export default function(state, emitter) {
     document.addEventListener('blur', () => (updateTitle = true));
     document.addEventListener('focus', () => {
       updateTitle = false;
-      emitter.emit('DOMTitleChange', 'Send');
+      emitter.emit(
+        'DOMTitleChange',
+        (typeof BRAND === 'string' && BRAND) || 'Send Ultra'
+      );
       faviconProgressbar.updateFavicon(0);
     });
     checkFiles();
