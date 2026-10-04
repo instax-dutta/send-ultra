@@ -7,6 +7,9 @@ class Metadata {
     this.metadata = obj.metadata;
     this.auth = obj.auth;
     this.nonce = obj.nonce;
+    // Storage prefix, carried so a download can resolve its object without
+    // asking Redis for the prefix a second time.
+    this.prefix = obj.prefix;
   }
 }
 

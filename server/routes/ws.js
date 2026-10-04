@@ -1,14 +1,14 @@
 const crypto = require('crypto');
 const storage = require('../storage');
 const config = require('../config');
-const mozlog = require('../log');
+const createLogger = require('../log');
 const Limiter = require('../limiter');
 const fxa = require('../fxa');
 const { encryptedSize } = require('../../app/utils');
 
 const { Transform } = require('stream');
 
-const log = mozlog('send.upload');
+const log = createLogger('send.upload');
 
 module.exports = function(ws, req) {
   let fileStream;
@@ -106,7 +106,7 @@ module.exports = function(ws, req) {
       if (ws.readyState === 1) {
         ws.send(
           JSON.stringify({
-            error: e === 'limit' ? 413 : 500
+            error: e.message === 'limit' ? 413 : 500
           })
         );
       }

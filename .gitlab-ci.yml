@@ -6,7 +6,7 @@ stages:
 # Build Send, run npm tests
 test:
   stage: test
-  image: "node:16-slim"
+  image: "node:22-slim"
   only:
     - api
     - branches
@@ -20,7 +20,7 @@ test:
   before_script:
     # Install dependencies
     - apt-get update
-    - apt-get install -y git python3 build-essential libxtst6
+    - apt-get install -y git python3 build-essential libxtst6 redis-server
 
     # Prepare Chrome for puppeteer
     - apt-get install -y wget gnupg

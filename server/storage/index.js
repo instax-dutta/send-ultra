@@ -1,6 +1,6 @@
 const config = require('../config');
 const Metadata = require('../metadata');
-const mozlog = require('../log');
+const createLogger = require('../log');
 const createRedisClient = require('./redis');
 
 function getPrefix(seconds) {
@@ -17,7 +17,7 @@ class DB {
     } else {
       Storage = require('./fs');
     }
-    this.log = mozlog('send.storage');
+    this.log = createLogger('send.storage');
 
     this.storage = new Storage(config, this.log);
 
@@ -32,28 +32,47 @@ class DB {
     return Math.ceil(result) * 1000;
   }
 
-  async getPrefixedId(id) {
-    const prefix = await this.redis.hgetAsync(id, 'prefix');
+  prefixedPath(id, prefix) {
     return `${prefix}-${id}`;
   }
 
-  async length(id) {
-    const filePath = await this.getPrefixedId(id);
+  async getPrefixedId(id) {
+    const prefix = await this.redis.hgetAsync(id, 'prefix');
+    return this.prefixedPath(id, prefix);
+  }
+
+  async length(id, prefix) {
+    const filePath =
+      prefix === undefined
+        ? await this.getPrefixedId(id)
+        : this.prefixedPath(id, prefix);
     return this.storage.length(filePath);
   }
 
-  async get(id) {
-    const filePath = await this.getPrefixedId(id);
+  async get(id, prefix) {
+    const filePath =
+      prefix === undefined
+        ? await this.getPrefixedId(id)
+        : this.prefixedPath(id, prefix);
     return this.storage.getStream(filePath);
   }
 
   async set(id, file, meta, expireSeconds = config.default_expire_seconds) {
     const prefix = getPrefix(expireSeconds);
-    const filePath = `${prefix}-${id}`;
+    const filePath = this.prefixedPath(id, prefix);
     await this.storage.set(filePath, file);
+    // hmset is deprecated in Redis 4+; the object form of hset is equivalent.
+    // These are fire-and-forget today, so route failures to the logger rather
+    // than letting them surface as unhandled rejections.
     this.redis.hset(id, 'prefix', prefix);
     if (meta) {
-      this.redis.hmset(id, meta);
+      // hmset is deprecated in Redis 4+ and both the object and flat-array
+      // forms of hset are rejected or silently dropped depending on the
+      // client, so write each field with the scalar form. node_redis batches
+      // commands issued in the same tick, so this stays a single write.
+      for (const key of Object.keys(meta)) {
+        this.redis.hset(id, key, meta[key]);
+      }
     }
     this.redis.expire(id, expireSeconds);
   }
@@ -68,7 +87,9 @@ class DB {
 
   async del(id) {
     const filePath = await this.getPrefixedId(id);
-    this.storage.del(filePath);
+    // Awaited: an un-awaited delete produced an unhandled rejection when the
+    // object was already gone.
+    await this.storage.del(filePath);
     this.redis.del(id);
   }
 

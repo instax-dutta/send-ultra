@@ -2,11 +2,11 @@ const assets = require('../../common/assets');
 const routes = require('../routes');
 const pages = require('../routes/pages');
 const tests = require('../../test/frontend/routes');
-const expressWs = require('@dannycoates/express-ws');
+const expressWs = require('../ws');
 
 module.exports = function(app, devServer) {
   assets.setMiddleware(devServer.middleware);
-  expressWs(app, null, { perMessageDeflate: false });
+  expressWs(app, { perMessageDeflate: false });
   routes(app);
   app.ws('/api/ws', require('../routes/ws'));
   tests(app);

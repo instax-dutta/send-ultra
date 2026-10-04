@@ -1,13 +1,16 @@
 const storage = require('../storage');
-const mozlog = require('../log');
-const log = mozlog('send.download');
+const createLogger = require('../log');
+const log = createLogger('send.download');
 
 module.exports = async function(req, res) {
   const id = req.params.id;
   try {
     const meta = req.meta;
-    const contentLength = await storage.length(id);
-    const fileStream = await storage.get(id);
+    // auth.hmac already loaded the metadata hash, which carries the storage
+    // prefix. Reusing it here removes two Redis round trips per download.
+    const prefix = meta.prefix;
+    const contentLength = await storage.length(id, prefix);
+    const fileStream = await storage.get(id, prefix);
     let cancelled = false;
 
     req.on('aborted', () => {

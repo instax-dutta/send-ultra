@@ -1,0 +1,20 @@
+env:
+  browser: true
+  es2020: true
+
+globals:
+  # Web platform globals that Node exposes but this eslint version predates.
+  ReadableStream: readonly
+  WritableStream: readonly
+  TransformStream: readonly
+  fetch: readonly
+  File: readonly
+  Blob: readonly
+  FileReader: readonly
+  TextEncoder: readonly
+  TextDecoder: readonly
+  crypto: readonly
+  performance: readonly
+
+rules:
+  node/no-unsupported-features: off

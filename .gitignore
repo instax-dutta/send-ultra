@@ -14,3 +14,6 @@ ios/send-ios/assets/vendor.js
 ios/send-ios.xcodeproj/project.xcworkspace/xcuserdata/*
 ios/send-ios.xcodeproj/xcuserdata/*
 test/integration/downloads
+
+# unlazy gate ledger state and local artifacts
+.codebase-memory/

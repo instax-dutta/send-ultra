@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const promisify = require('util').promisify;
+const { promisify } = require('util');
 
 const stat = promisify(fs.stat);
+const unlink = promisify(fs.unlink);
 
 class FSStorage {
   constructor(config, log) {
@@ -31,15 +32,24 @@ class FSStorage {
         fstream.destroy(err);
       });
       fstream.on('error', err => {
-        fs.unlinkSync(filepath);
+        // unlinkSync could itself throw and would block the event loop.
+        unlink(filepath).catch(() => {});
         reject(err);
       });
       fstream.on('finish', resolve);
     });
   }
 
-  del(id) {
-    return Promise.resolve(fs.unlinkSync(path.join(this.dir, id)));
+  async del(id) {
+    try {
+      await unlink(path.join(this.dir, id));
+    } catch (e) {
+      // A missing or already-removed object is the desired end state, so it is
+      // not an error. Anything else is.
+      if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
+        throw e;
+      }
+    }
   }
 
   ping() {

@@ -39,7 +39,6 @@ module.exports = function(app) {
           function(req) {
             const baseUrl = config.deriveBaseUrl(req);
             const r = baseUrl.replace(/^http(s?):\/\//, 'ws$1://');
-            console.log([baseUrl, r]);
             return r;
           }
         ],
@@ -75,14 +74,13 @@ module.exports = function(app) {
     next();
   });
   app.use(function(req, res, next) {
-    try {
-      // set by the load balancer
-      const [country, state] = req.header('X-Client-Geo-Location').split(',');
-      req.geo = {
-        country,
-        state
-      };
-    } catch (e) {
+    // Set by the load balancer. Absent in local and direct deployments, which
+    // is the common case, so do not lean on an exception for it.
+    const geo = req.headers['x-client-geo-location'];
+    if (geo) {
+      const [country, state] = String(geo).split(',');
+      req.geo = { country, state };
+    } else {
       req.geo = {};
     }
     next();

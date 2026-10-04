@@ -1,6 +1,7 @@
 const config = require('./config');
 
 module.exports = {
+  BRAND: config.custom_title,
   LIMITS: {
     MAX_FILE_SIZE: config.max_file_size,
     MAX_DOWNLOADS: config.max_downloads,

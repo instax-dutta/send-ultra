@@ -129,11 +129,20 @@ describe('Storage', function() {
         auth: 'foo',
         metadata: 'bar',
         nonce: 'baz',
-        owner: 'bmo'
+        owner: 'bmo',
+        prefix: '1'
       };
       await storage.set('x', null, m);
       const meta = await storage.metadata('x');
       assert.deepEqual(meta, m);
+      await storage.del('x');
+    });
+
+    it('exposes the storage prefix so a download need not re-read it', async function() {
+      await storage.set('x', null, { foo: 'bar' }, 604800);
+      const meta = await storage.metadata('x');
+      assert.equal(meta.prefix, '7');
+      await storage.del('x');
     });
   });
 });

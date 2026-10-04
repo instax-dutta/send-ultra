@@ -170,13 +170,13 @@ const conf = convict({
   },
   custom_title: {
     format: String,
-    default: 'Send',
+    default: 'Send Ultra',
     env: 'CUSTOM_TITLE'
   },
   custom_description: {
     format: String,
     default:
-      'Encrypt and send files with a link that automatically expires to ensure your important documents don’t stay online forever.',
+      'Send Ultra encrypts your files in the browser and shares them with a link that automatically expires, so your documents never stay online forever.',
     env: 'CUSTOM_DESCRIPTION'
   },
   detect_base_url: {
@@ -198,6 +198,11 @@ const conf = convict({
     format: String,
     default: '', // disabled
     env: 'FXA_CLIENT_ID'
+  },
+  fxa_required: {
+    format: Boolean,
+    default: false,
+    env: 'FXA_REQUIRED'
   },
   fxa_key_scope: {
     format: String,
