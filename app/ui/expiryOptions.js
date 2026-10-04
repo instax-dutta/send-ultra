@@ -4,12 +4,15 @@ const { secondsToL10nId } = require('../utils');
 const selectbox = require('./selectbox');
 
 module.exports = function(state, emit) {
+  /*
+   * The sentence and both selects live in one flex row so the control wraps as
+   * a unit on a narrow viewport instead of orphaning a select onto its own line.
+   */
   const el = html`
-    <div class="px-1">
+    <div class="su-expiry">
       ${raw(
         state.translate('archiveExpiryInfo', {
-          downloadCount:
-            '<span class="lg:inline-block md:block sm:inline-block block"></span><select id="dlCount"></select>',
+          downloadCount: '<select id="dlCount"></select>',
           timespan: '<select id="timespan"></select>'
         })
       )}
@@ -34,9 +37,6 @@ module.exports = function(state, emit) {
         const selected = parseInt(value);
         state.archive.dlimit = selected;
         emit('render');
-        if (selected > parseInt(state.user.maxDownloads || '0')) {
-          console.log('Chosen max download count is larger than the allowed limit', selected)
-        }
       },
       'expire-after-dl-count-select'
     ),
@@ -60,9 +60,6 @@ module.exports = function(state, emit) {
         const selected = parseInt(value);
         state.archive.timeLimit = selected;
         emit('render');
-        if (selected > parseInt(state.user.maxExpireSeconds || '0')) {
-          console.log('Chosen download expiration is larger than the allowed limit', selected)
-        }
       },
       'expire-after-time-select'
     ),

@@ -3,6 +3,7 @@ const Component = require('choo/component');
 const Account = require('./account');
 const assets = require('../../common/assets');
 const { platform } = require('../utils');
+const eyebrow = require('./eyebrow');
 
 class Header extends Component {
   constructor(name, state, emit) {
@@ -31,32 +32,35 @@ class Header extends Component {
             ? this.state.WEB_UI.CUSTOM_ASSETS.wordmark
             : assets.get('wordmark.svg') + '#logo'
       };
+    const brand = eyebrow.brand(this.state);
+
+    /*
+     * The original wordmark was a vector drawing of "Send", so it could not
+     * spell a longer name. The brand name is set in type instead, which keeps
+     * it correct for every locale and needs no new artwork.
+     */
+    const mark = html`
+      <span class="su-wordmark">${brand}</span>
+    `;
+
     const title =
       platform() === 'android'
         ? html`
-            <a class="flex flex-row items-center">
-              <img src="${assetMap.icon}" />
-              <svg class="w-48">
-                <use xlink:href="${assetMap.wordmark}" />
-              </svg>
-            </a>
+            <a class="su-brand" href="/"> ${assetMap.icon} ${mark} </a>
           `
         : html`
-            <a class="flex flex-row items-center" href="/">
-              <img
-                alt="${this.state.translate('title')}"
-                src="${assetMap.icon}"
-              />
-              <svg viewBox="66 0 340 64" class="w-48 md:w-64">
-                <use xlink:href="${assetMap.wordmark}" />
-              </svg>
+            <a class="su-brand" href="/">
+              <img class="su-brand-icon" alt="" src="${assetMap.icon}" />
+              ${mark}
             </a>
           `;
+
     return html`
-      <header
-        class="main-header relative flex-none flex flex-row items-center justify-between w-full px-6 md:px-8 h-16 md:h-24 z-20 bg-transparent"
-      >
-        ${title} ${this.account.render()}
+      <header class="su-header">
+        <div class="su-header-inner su-enter">
+          ${title}
+          <div class="su-header-slot">${this.account.render()}</div>
+        </div>
       </header>
     `;
   }

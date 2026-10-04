@@ -21,11 +21,7 @@ module.exports = function(state, emit) {
 
   if (archives.length > 0 && state.WEB_UI.UPLOADS_LIST_NOTICE_HTML) {
     archives.push(html`
-      <p
-        class="w-full p-2 border-default dark:border-grey-70 rounded-default text-orange-60 bg-yellow-40 text-center leading-normal"
-      >
-        ${raw(state.WEB_UI.UPLOADS_LIST_NOTICE_HTML)}
-      </p>
+      <p class="su-notice">${raw(state.WEB_UI.UPLOADS_LIST_NOTICE_HTML)}</p>
     `);
   }
 
@@ -34,19 +30,17 @@ module.exports = function(state, emit) {
   if (archives.length > 0 && state.WEB_UI.SHOW_THUNDERBIRD_SPONSOR) {
     archives.push(html`
       <a
-        class="w-full p-2 border-default dark:border-grey-70 rounded-default text-orange-60 bg-yellow-40 text-center leading-normal d-block"
+        class="su-notice su-notice-link"
         href="https://www.thunderbird.net/"
+        rel="noopener noreferrer"
+        target="_blank"
       >
-        <svg
-          width="30"
-          height="30"
-          class="m-2 mr-3 d-inline-block align-middle"
-        >
+        <svg width="18" height="18" class="su-notice-icon">
           <image
             xlink:href="${assets.get('thunderbird-icon.svg')}"
             src="${assets.get('thunderbird-icon.svg')}"
-            width="30"
-            height="30"
+            width="18"
+            height="18"
           />
         </svg>
         Sponsored by Thunderbird
@@ -54,20 +48,29 @@ module.exports = function(state, emit) {
     `);
   }
 
-  const right =
-    archives.length === 0
-      ? intro(state)
-      : list(archives, 'p-2 h-full overflow-y-auto w-full', 'mb-4 w-full');
+  /*
+   * Asymmetrical bento. The upload surface is the anchor at eight columns and
+   * two rows; the supporting rail takes the remaining four. Below md every
+   * span resets and the grid becomes a single stack with generous gaps.
+   */
+  const hasArchives = archives.length > 0;
+  const right = hasArchives
+    ? html`
+        <div class="su-rail su-enter su-d3">
+          ${list(archives, 'su-rail-list', 'su-rail-item su-enter-sm')}
+        </div>
+      `
+    : html`
+        <div class="su-rail su-enter su-d3">${intro(state)}</div>
+      `;
 
   return html`
-    <main class="main">
+    <main class="su-main">
       ${state.modal && modal(state, emit)}
-      <section
-        class="h-full w-full p-6 md:p-8 overflow-hidden md:flex md:flex-row md:rounded-xl md:shadow-big"
-      >
-        <div class="px-2 w-full md:px-0 md:mr-8 md:w-1/2">${left}</div>
-        <div class="mt-6 w-full md:w-1/2 md:-m-2">${right}</div>
-      </section>
+      <div class="su-bento">
+        <div class="su-cell su-cell-stage su-enter su-d1">${left}</div>
+        ${right}
+      </div>
     </main>
   `;
 };

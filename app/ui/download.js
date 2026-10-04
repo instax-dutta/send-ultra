@@ -6,6 +6,7 @@ const noStreams = require('./noStreams');
 const notFound = require('./notFound');
 const downloadPassword = require('./downloadPassword');
 const downloadCompleted = require('./downloadCompleted');
+const eyebrow = require('./eyebrow');
 const BIG_SIZE = 1024 * 1024 * 256;
 
 function createFileInfo(state) {
@@ -19,12 +20,11 @@ function createFileInfo(state) {
 
 function downloading(state, emit) {
   return html`
-    <div
-      class="flex flex-col w-full h-full items-center md:justify-center md:-mt-8"
-    >
-      <h1 class="text-3xl font-bold mb-4">
+    <div class="su-col su-enter">
+      <span class="su-eyebrow su-mx-auto">
+        <span class="su-eyebrow-dot"></span>
         ${state.translate('downloadingTitle')}
-      </h1>
+      </span>
       ${archiveTile.downloading(state, emit)}
     </div>
   `;
@@ -35,15 +35,12 @@ function preview(state, emit) {
     return noStreams(state, emit);
   }
   return html`
-    <div
-      class="flex flex-col w-full max-w-md h-full mx-auto items-center justify-center"
-    >
-      <h1 class="text-3xl font-bold mb-4">
+    <div class="su-col su-enter">
+      ${eyebrow(state, 'su-mx-auto')}
+      <h1 class="su-title su-mt-5 su-mx-auto">
         ${state.translate('downloadTitle')}
       </h1>
-      <p
-        class="w-full text-grey-80 text-center leading-normal dark:text-grey-40"
-      >
+      <p class="su-lede su-mx-auto">
         ${state.translate('downloadDescription')}
       </p>
       ${archiveTile.preview(state, emit)}
@@ -56,7 +53,7 @@ module.exports = function(state, emit) {
   if (!state.fileInfo) {
     state.fileInfo = createFileInfo(state);
     if (downloadMetadata.status === 404) {
-      return notFound(state);
+      return notFound(state, emit);
     }
     if (!state.fileInfo.nonce) {
       // coming from something like the browser back button
@@ -83,14 +80,15 @@ module.exports = function(state, emit) {
   } else if (state.fileInfo.requiresPassword && !state.fileInfo.password) {
     content = downloadPassword(state, emit);
   }
+
+  /*
+   * The receiver flow is a single centred column rather than a bento: there is
+   * one thing to do, so a second column would only dilute it. The surrounding
+   * shell is identical to the upload route.
+   */
   return html`
-    <main class="main">
-      ${state.modal && modal(state, emit)}
-      <section
-        class="relative h-full w-full p-6 md:p-8 md:rounded-xl md:shadow-big"
-      >
-        ${content}
-      </section>
+    <main class="su-main">
+      ${state.modal && modal(state, emit)} ${content}
     </main>
   `;
 };

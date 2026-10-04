@@ -85,6 +85,15 @@ const serviceWorker = {
         ]
       },
       {
+        // The asset map includes the webfonts, so this config needs the rule too.
+        test: /\.woff2?$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[contenthash:8].[ext]',
+          esModule: false
+        }
+      },
+      {
         // loads all assets from assets/ for use by common/assets.js
         test: require.resolve('./common/generate_asset_map.js'),
         use: ['babel-loader', 'val-loader']
@@ -208,6 +217,16 @@ const web = {
         // creates test.js for /test
         test: require.resolve('./test/frontend/index.js'),
         use: ['babel-loader', 'val-loader']
+      },
+      {
+        // Self-hosted webfonts. Without a rule, a woff2 referenced from CSS has
+        // no loader and the build fails or inlines it.
+        test: /\.woff2?$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[contenthash:8].[ext]',
+          esModule: false
+        }
       },
       {
         // loads all assets from assets/ for use by common/assets.js

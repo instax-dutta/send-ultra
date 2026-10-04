@@ -19,12 +19,116 @@ const colors = {
   white: '#ffffff',
 
   cloud: 'rgba(255, 255, 255, 0.8)',
-  violet: 'hsl(258, 57%, 35%)'
+  violet: 'hsl(258, 57%, 35%)',
+
+  // Interface tokens. These live in the shared palette rather than only in
+  // theme.extend.colors because this config pins textColor, backgroundColor
+  // and borderColor to `colors`, so anything added purely via extend would not
+  // generate bg-*, text-* or border-* utilities.
+  ink: '#050506',
+  'ink-soft': '#0b0b0d',
+  graphite: '#16161a',
+  hairline: 'rgba(255, 255, 255, 0.08)',
+  'hairline-strong': 'rgba(255, 255, 255, 0.16)',
+  orb: 'rgba(124, 92, 255, 0.28)',
+  'orb-teal': 'rgba(45, 212, 191, 0.18)'
 };
 
 module.exports = {
   purge: false,
   theme: {
+    /*
+     * Design tokens for the Send Ultra interface.
+     *
+     * Tailwind 2.2's classic engine has no arbitrary values, so `rounded-[2rem]`
+     * and `ease-[cubic-bezier(...)]` silently emit no CSS at all. Everything the
+     * interface needs is declared here instead, which keeps utility names
+     * readable and turns a missing token into a build-time failure rather than
+     * an unstyled element.
+     */
+    extend: {
+      colors: {
+        ink: '#050506',
+        'ink-soft': '#0b0b0d',
+        graphite: '#16161a',
+        hairline: 'rgba(255, 255, 255, 0.08)',
+        'hairline-strong': 'rgba(255, 255, 255, 0.16)',
+        orb: 'rgba(124, 92, 255, 0.28)',
+        'orb-teal': 'rgba(45, 212, 191, 0.18)'
+      },
+      fontFamily: {
+        // Self-hosted, so it satisfies `default-src 'self'` and needs no
+        // third-party connection at runtime.
+        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace']
+      },
+      fontSize: {
+        micro: '0.625rem',
+        huge: [
+          'clamp(2.75rem, 7vw, 5.5rem)',
+          { lineHeight: '0.92', letterSpacing: '-0.04em' }
+        ]
+      },
+      letterSpacing: {
+        tighter: '-0.055em',
+        widest: '0.2em'
+      },
+      borderRadius: {
+        '2xl': '2rem',
+        '3xl': '2.5rem',
+        '4xl': '3rem',
+        // Concentric curve for the inner core of a double-bezel card:
+        // 2rem shell radius minus the 0.375rem shell padding.
+        core: '1.625rem'
+      },
+      spacing: {
+        28: '7rem',
+        32: '8rem',
+        40: '10rem'
+      },
+      // padding, margin, height and width are each pinned explicitly in this
+      // config, so spacing alone does not add steps to them.
+      padding: {
+        40: '10rem'
+      },
+      margin: {
+        40: '10rem'
+      },
+      minHeight: {
+        /*
+         * dvh avoids the iOS Safari viewport jump that a fixed height causes.
+         * It is unsupported by the older engines in this browserslist, so the
+         * vh declaration is emitted first and dvh overrides it where valid.
+         */
+        'screen-dvh': ['100vh', '100dvh']
+      },
+      maxWidth: {
+        prose: '68ch'
+      },
+      transitionTimingFunction: {
+        // Asymmetric: a heavy start then a long settle. Never linear or ease-in-out.
+        fluid: 'cubic-bezier(0.32, 0.72, 0, 1)',
+        spring: 'cubic-bezier(0.34, 1.4, 0.64, 1)'
+      },
+      transitionProperty: {
+        fluid: 'transform, opacity, background-color, border-color, box-shadow'
+      },
+      boxShadow: {
+        // Diffuse ambient light, not a hard dark drop shadow.
+        plate:
+          '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 60px -24px rgba(0,0,0,0.9)',
+        float: '0 40px 90px -40px rgba(0,0,0,0.95)',
+        // The inner highlight that makes a nested card read as machined metal.
+        bevel: 'inset 0 1px 1px 0 rgba(255,255,255,0.15)'
+      },
+      gridTemplateColumns: {
+        12: 'repeat(12, minmax(0, 1fr))'
+      },
+      scale: {
+        98: '.98'
+      }
+    },
     colors: colors,
     screens: {
       sm: '576px',
@@ -292,6 +396,30 @@ module.exports = {
   },
 
   variants: {
+    /*
+     * The variants block below replaces the default set for every plugin it
+     * names, which silently removed the grid and transform variants. Extending
+     * keeps existing behaviour and restores what the bento layout relies on.
+     */
+    extend: {
+      gridColumn: ['responsive'],
+      gridRow: ['responsive'],
+      gridTemplateColumns: ['responsive'],
+      gap: ['responsive'],
+      transitionProperty: ['responsive'],
+      transitionTimingFunction: ['responsive'],
+      transitionDuration: ['responsive'],
+      transform: ['responsive', 'hover', 'focus', 'active', 'group-hover'],
+      translate: ['responsive', 'hover', 'focus', 'active', 'group-hover'],
+      scale: ['responsive', 'hover', 'focus', 'active', 'group-hover'],
+      rotate: ['responsive', 'hover', 'focus', 'group-hover'],
+      filter: ['responsive', 'hover', 'focus', 'group-hover'],
+      backdropFilter: ['responsive', 'hover', 'focus'],
+      ringWidth: ['responsive', 'focus'],
+      ringColor: ['responsive', 'focus', 'active', 'hover'],
+      boxShadow: ['responsive', 'hover', 'focus', 'group-hover', 'dark'],
+      borderRadius: ['responsive', 'hover', 'focus']
+    },
     appearance: ['responsive'],
     backgroundAttachment: ['responsive'],
     backgroundColor: ['responsive', 'hover', 'focus'],
@@ -358,5 +486,14 @@ module.exports = {
   corePlugins: {
     container: false
   },
+  /*
+   * Design tokens for the Send Ultra interface.
+   *
+   * Tailwind 2.2's classic engine has no arbitrary values, so `rounded-[2rem]`
+   * and `ease-[cubic-bezier(...)]` silently produce no CSS at all. Everything
+   * the interface needs is declared here instead, which keeps the utility names
+   * readable and means a missing token fails loudly at build time rather than
+   * rendering as an unstyled element.
+   */
   plugins: []
 };

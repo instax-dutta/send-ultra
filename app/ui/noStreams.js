@@ -1,63 +1,74 @@
 const html = require('choo/html');
 const { bytes } = require('../utils');
 const assets = require('../../common/assets');
+const glyphs = require('./glyphs');
 
 module.exports = function(state, emit) {
   const archive = state.fileInfo;
+
+  /*
+   * Structure contract: optionChanged() reads the submit button as
+   * event.currentTarget.nextElementSibling, so the <fieldset> has to remain the
+   * element immediately before it.
+   */
   return html`
-    <div
-      class="flex flex-col w-full max-w-md h-full mx-auto items-center justify-center"
-    >
-      <h1 class="mb-4 text-3xl font-bold">${state.translate(
-        'downloadTitle'
-      )}</h1>
-      <p
-        class="w-full p-2 border-default border-yellow-50 rounded-default md:w-4/5 text-orange-60 bg-yellow-40 text-center leading-normal"
-      >
-        ⚠️ ${state.translate('noStreamsWarning')} ⚠️
+    <div class="su-col su-enter">
+      <div class="su-glyph su-glyph-warn su-mx-auto su-enter-sm">
+        ${glyphs.warning()}
+      </div>
+
+      <h1 class="su-title su-mt-8 su-mx-auto su-enter-sm">
+        ${state.translate('downloadTitle')}
+      </h1>
+
+      <p class="su-lede su-mx-auto su-enter-sm">
+        ${state.translate('noStreamsWarning')}
       </p>
-      <form class="md:w-128" onsubmit=${submit}>
-        <fieldset class="border-default rounded-default p-4 my-4" onchange=${optionChanged}>
-          <div class="flex items-center mb-2">
-            <svg class="h-8 w-6 mr-3 flex-shrink-0 text-primary">
-              <use xlink:href="${assets.get('blue_file.svg')}#icon"/>
-            </svg>
-            <p class="flex-grow">
-              <h1 class="text-base font-medium word-break-all">${
-                archive.name
-              }</h1>
-              <div class="text-sm font-normal opacity-75 pt-1">${bytes(
-                archive.size
-              )}</div>
-            </p>
+
+      <form class="su-w-full su-mt-8 su-enter-sm" onsubmit=${submit}>
+        <div class="su-shell su-w-full">
+          <div class="su-core su-card">
+            <div class="su-meta">
+              <svg class="su-meta-icon">
+                <use xlink:href="${assets.get('blue_file.svg')}#icon"></use>
+              </svg>
+              <div class="su-meta-body">
+                <p class="su-meta-name">${archive.name}</p>
+                <p class="su-meta-size">${bytes(archive.size)}</p>
+              </div>
+            </div>
           </div>
-          <div class=" mt-6 mb-3">
-            <input class="mx-2" type="radio" name="gus" id="copy" value="copy" checked>
-            <label class="" for="copy">${state.translate(
-              'noStreamsOptionCopy'
-            )}</label>
-          </div>
-          <div class="my-3">
-            <input class="mx-2" type="radio" name="gus" id="firefox" value="firefox">
-            <label class="" for="firefox">${state.translate(
-              'noStreamsOptionFirefox'
-            )}</label>
-          </div>
-          <div class="mt-3">
-            <input class="mx-2" type="radio" name="gus" id="download" value="download">
-            <label class="" for="download">${state.translate(
-              'noStreamsOptionDownload'
-            )}</label>
-          </div>
+        </div>
+
+        <fieldset class="su-choice-group su-mt-5" onchange=${optionChanged}>
+          <label class="su-choice">
+            <input type="radio" name="gus" id="copy" value="copy" checked />
+            <span class="su-choice-text">
+              ${state.translate('noStreamsOptionCopy')}
+            </span>
+          </label>
+          <label class="su-choice">
+            <input type="radio" name="gus" id="firefox" value="firefox" />
+            <span class="su-choice-text">
+              ${state.translate('noStreamsOptionFirefox')}
+            </span>
+          </label>
+          <label class="su-choice">
+            <input type="radio" name="gus" id="download" value="download" />
+            <span class="su-choice-text">
+              ${state.translate('noStreamsOptionDownload')}
+            </span>
+          </label>
         </fieldset>
+
         <input
-            class="btn rounded-lg w-full flex flex-shrink-0 items-center justify-center"
-            value="${state.translate('copyLinkButton')}"
-            title="${state.translate('copyLinkButton')}"
-            type="submit" />
-            <p
-          class="text-grey-80 leading-normal dark:text-grey-40 font-semibold text-center md:my-8 md:text-left"
-        >
+          class="su-btn su-mt-6 su-justify-center su-w-full"
+          value="${state.translate('copyLinkButton')}"
+          title="${state.translate('copyLinkButton')}"
+          type="submit"
+        />
+
+        <p class="su-lede su-mt-6 su-mx-auto">
           ${state.translate('downloadConfirmDescription')}
         </p>
       </form>
@@ -69,7 +80,6 @@ module.exports = function(state, emit) {
     const choice = event.target.value;
     const button = event.currentTarget.nextElementSibling;
     let title = button.title;
-    console.error(choice, title);
     switch (choice) {
       case 'copy':
         title = state.translate('copyLinkButton');

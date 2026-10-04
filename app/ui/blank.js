@@ -1,14 +1,17 @@
 const html = require('choo/html');
 
+/*
+ * Placeholder layout used by the Android shell while it swaps routes. It has no
+ * chrome of its own, so it only reserves the working area that su-main expects
+ * rather than painting a legacy white panel behind the field orbs.
+ */
 module.exports = function() {
   return html`
-    <main class="main">
-      <section
-        class="h-full w-full p-6 md:p-8 md:flex md:flex-row md:rounded-xl md:shadow-big"
-      >
-        <div class="md:mr-6 md:w-1/2 w-full"></div>
-        <div class="md:w-1/2 mt-6 md:mt-0 w-full"></div>
-      </section>
+    <main class="su-main">
+      <div class="su-bento" aria-hidden="true">
+        <div class="su-cell su-cell-stage"></div>
+        <div class="su-rail"></div>
+      </div>
     </main>
   `;
 };

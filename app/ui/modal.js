@@ -1,14 +1,16 @@
 const html = require('choo/html');
 
 module.exports = function(state, emit) {
+  /*
+   * A frosted sheet rather than an opaque panel. The blur lives on this
+   * fixed overlay only, never on a scrolling container, so the compositor can
+   * cache it instead of re-blurring on every scroll frame.
+   */
   return html`
-    <send-modal
-      class="absolute inset-0 flex items-center justify-center overflow-hidden z-40 bg-white md:rounded-xl md:my-8 dark:bg-grey-90"
-    >
-      <div
-        class="h-full w-full max-h-screen absolute top-0 flex justify-center md:items-center"
-      >
-        <div class="w-full">
+    <send-modal class="su-modal">
+      <div class="su-modal-veil"></div>
+      <div class="su-modal-sheet">
+        <div class="su-modal-core su-enter-sm">
           ${state.modal(state, emit, close)}
         </div>
       </div>

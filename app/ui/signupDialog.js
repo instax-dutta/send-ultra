@@ -1,5 +1,4 @@
 const html = require('choo/html');
-const assets = require('../../common/assets');
 const { bytes } = require('../utils');
 
 module.exports = function() {
@@ -7,17 +6,16 @@ module.exports = function() {
     const DAYS = Math.floor(state.LIMITS.MAX_EXPIRE_SECONDS / 86400);
     let submitting = false;
     return html`
-      <send-signup-dialog
-        class="flex flex-col justify-center my-16 md:my-0 px-8 md:px-24 w-full h-full"
-      >
-        <img src="${assets.get('master-logo.svg')}" class="h-16 mt-1 mb-4" />
-        <section class="flex flex-col flex-shrink-0 self-center">
-          <h1 class="text-3xl font-bold text-center">
-            ${state.translate('accountBenefitTitle')}
-          </h1>
-          <ul
-            class="leading-normal list-disc text-grey-80 my-2 mt-4 pl-4 md:self-center dark:text-grey-40"
-          >
+      <send-signup-dialog class="su-dialog">
+        <span class="su-eyebrow">
+          <span class="su-eyebrow-dot"></span>
+          ${state.translate('-send-brand')}
+        </span>
+        <h1 class="su-title su-mt-5">
+          ${state.translate('accountBenefitTitle')}
+        </h1>
+        <section class="su-mt-5 su-w-full">
+          <ul class="su-list su-text-left">
             <li>
               ${state.translate('accountBenefitLargeFiles', {
                 size: bytes(state.LIMITS.MAX_FILE_SIZE)
@@ -30,16 +28,16 @@ module.exports = function() {
             <li>${state.translate('accountBenefitSync')}</li>
           </ul>
         </section>
-        <section class="flex flex-col flex-grow m-4 md:self-center md:w-128">
+        <section class="su-w-full su-mt-6">
           <form onsubmit=${submitEmail} data-no-csrf>
             <input
               id="email-input"
               type="email"
-              class="hidden border-default rounded-lg w-full px-2 py-1 h-12 mb-3 text-lg text-grey-70 leading-loose dark:bg-grey-80 dark:text-white"
+              class="hidden su-input su-text-left"
               placeholder=${state.translate('emailPlaceholder')}
             />
             <input
-              class="btn rounded-lg w-full flex flex-shrink-0 items-center justify-center"
+              class="su-btn su-mt-6 su-justify-center su-w-full"
               value="${state.translate('signInOnlyButton')}"
               title="${state.translate('signInOnlyButton')}"
               id="email-submit"
@@ -50,7 +48,7 @@ module.exports = function() {
             ? ''
             : html`
                 <button
-                  class="my-3 link-primary font-medium"
+                  class="su-link-btn su-mt-4"
                   title="${state.translate('deletePopupCancel')}"
                   onclick=${cancel}
                 >

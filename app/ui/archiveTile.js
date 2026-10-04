@@ -12,6 +12,8 @@ const {
   timeLeft
 } = require('../utils');
 const expiryOptions = require('./expiryOptions');
+const eyebrow = require('./eyebrow');
+const glyphs = require('./glyphs');
 
 function expiryInfo(translate, archive) {
   const l10n = timeLeft(archive.expiresAt - Date.now());
@@ -149,34 +151,32 @@ function password(state) {
 
 function fileInfo(file, action) {
   return html`
-    <send-file class="flex flex-row items-center p-3 w-full">
-      <svg class="h-8 w-8 text-primary">
-        <use xlink:href="${assets.get('blue_file.svg')}#icon"/>
+    <send-file class="su-meta">
+      <svg class="su-meta-icon">
+        <use xlink:href="${assets.get('blue_file.svg')}#icon" />
       </svg>
-      <p class="ml-4 w-full">
-        <h1 class="text-base font-medium word-break-all">${file.name}</h1>
-        <div class="text-sm font-normal opacity-75 pt-1">${bytes(
-          file.size
-        )}</div>
-      </p>
+      <div class="su-meta-body">
+        <p class="su-meta-name">${file.name}</p>
+        <p class="su-meta-size">${bytes(file.size)}</p>
+      </div>
       ${action}
-    </send-file>`;
+    </send-file>
+  `;
 }
 
 function archiveInfo(archive, action) {
   return html`
-    <p class="w-full flex items-center">
-      <svg class="h-8 w-6 mr-3 flex-shrink-0 text-primary">
-        <use xlink:href="${assets.get('blue_file.svg')}#icon"/>
+    <div class="su-meta">
+      <svg class="su-meta-icon">
+        <use xlink:href="${assets.get('blue_file.svg')}#icon" />
       </svg>
-      <p class="flex-grow">
-        <h1 class="text-base font-medium word-break-all">${archive.name}</h1>
-        <div class="text-sm font-normal opacity-75 pt-1">${bytes(
-          archive.size
-        )}</div>
-      </p>
+      <div class="su-meta-body">
+        <p class="su-meta-name">${archive.name}</p>
+        <p class="su-meta-size">${bytes(archive.size)}</p>
+      </div>
       ${action}
-    </p>`;
+    </div>
+  `;
 }
 
 function archiveDetails(translate, archive) {
@@ -187,11 +187,9 @@ function archiveDetails(translate, archive) {
         ${archive.open ? 'open' : ''}
         ontoggle="${toggled}"
       >
-        <summary
-          class="flex items-center link-primary text-sm cursor-pointer outline-none"
-        >
+        <summary class="su-toggle">
           <svg
-            class="fill-current w-4 h-4 mr-1"
+            class="su-toggle-chevron fill-current"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
           >
@@ -203,7 +201,16 @@ function archiveDetails(translate, archive) {
             num: archive.manifest.files.length
           })}
         </summary>
-        ${list(archive.manifest.files.map(f => fileInfo(f)))}
+        <ul class="su-manifest">
+          ${archive.manifest.files.map(
+            f => html`
+              <li class="su-manifest-item">
+                <span class="word-break-all">${f.name}</span>
+                <span class="su-manifest-size">${bytes(f.size)}</span>
+              </li>
+            `
+          )}
+        </ul>
       </details>
     `;
   }
@@ -217,12 +224,8 @@ module.exports = function(state, emit, archive) {
   const copyOrShare =
     state.capabilities.share || platform() === 'android'
       ? html`
-          <button
-            class="link-primary self-end flex items-start"
-            onclick=${share}
-            title="Share link"
-          >
-            <svg class="h-4 w-4 mr-2">
+          <button class="su-card-action" onclick=${share} title="Share link">
+            <svg class="h-4 w-4">
               <use xlink:href="${assets.get('share-24.svg')}#icon" />
             </svg>
             Share link
@@ -230,11 +233,11 @@ module.exports = function(state, emit, archive) {
         `
       : html`
           <button
-            class="link-primary focus:outline self-end flex items-center"
+            class="su-card-action"
             onclick=${copy}
             title="${state.translate('copyLinkButton')}"
           >
-            <svg class="h-4 w-4 mr-2">
+            <svg class="h-4 w-4">
               <use xlink:href="${assets.get('copy-16.svg')}#icon" />
             </svg>
             ${state.translate('copyLinkButton')}
@@ -244,12 +247,12 @@ module.exports = function(state, emit, archive) {
     platform() === 'web'
       ? html`
           <a
-            class="flex items-baseline link-primary"
+            class="su-card-action"
             href="${archive.url}"
             title="${state.translate('downloadButtonLabel')}"
             tabindex="0"
           >
-            <svg class="h-4 w-3 mr-2">
+            <svg class="h-4 w-3">
               <use xlink:href="${assets.get('dl.svg')}#icon" />
             </svg>
             ${state.translate('downloadButtonLabel')}
@@ -259,16 +262,13 @@ module.exports = function(state, emit, archive) {
           <div></div>
         `;
   return html`
-    <send-archive
-      id="archive-${archive.id}"
-      class="flex flex-col items-start rounded-default shadow-light bg-white p-4 w-full dark:bg-grey-90 dark:border-default dark:border-grey-70"
-    >
+    <send-archive id="archive-${archive.id}" class="su-filecard">
       ${archiveInfo(
         archive,
         html`
           <input
             type="image"
-            class="self-start flex-shrink-0 text-white hover:opacity-75 focus:outline"
+            class="su-icon-btn"
             alt="${state.translate('deleteButtonHover')}"
             title="${state.translate('deleteButtonHover')}"
             src="${assets.get('close-16.svg')}"
@@ -276,12 +276,12 @@ module.exports = function(state, emit, archive) {
           />
         `
       )}
-      <div class="text-sm opacity-75 w-full mt-2 mb-2">
+      <div class="su-muted su-text-sm w-full su-mt-3 su-mb-2">
         ${expiryInfo(state.translate, archive)}
       </div>
       ${archiveDetails(state.translate, archive)}
-      <hr class="w-full border-t my-4 dark:border-grey-70" />
-      <div class="flex justify-between w-full">
+      <hr class="su-rule su-my-5" />
+      <div class="su-actions">
         ${dl} ${copyOrShare}
       </div>
     </send-archive>
@@ -310,8 +310,8 @@ module.exports = function(state, emit, archive) {
     } else {
       try {
         await navigator.share({
-          title: state.translate('-send-brand'),
-          text: `Download "${archive.name}" with Send: simple, safe file sharing`,
+          title: state.brand || state.translate('-send-brand'),
+          text: `Download "${archive.name}" with Send Ultra: simple, safe file sharing`,
           //state.translate('shareMessage', { name }),
           url: archive.url
         });
@@ -323,72 +323,84 @@ module.exports = function(state, emit, archive) {
 };
 
 module.exports.wip = function(state, emit) {
+  /*
+   * Structure note: the file list must stay a direct <ul> child of #wip, and
+   * #file-upload must be immediately followed by the element that focus/blur
+   * toggle, because add() and the focus handlers reach into the DOM directly.
+   */
   return html`
-    <send-upload-area
-      class="flex flex-col bg-white h-full w-full dark:bg-grey-90"
-      id="wip"
-    >
-      ${list(
-        Array.from(state.archive.files)
-          .reverse()
-          .map(f =>
-            fileInfo(f, remove(f, state.translate('deleteButtonHover')))
-          ),
-        'flex-shrink bg-grey-10 rounded-t overflow-y-auto px-6 py-4 md:h-full md:max-h-half-screen dark:bg-black',
-        'bg-white px-2 my-2 shadow-light rounded-default dark:bg-grey-90 dark:border-default dark:border-grey-80'
-      )}
-      <div
-        class="flex-shrink-0 flex-grow flex items-end p-4 bg-grey-10 rounded-b mb-1 font-medium dark:bg-grey-90"
-      >
-        <input
-          id="file-upload"
-          class="opacity-0 w-0 h-0 appearance-none absolute overflow-hidden"
-          type="file"
-          multiple
-          onfocus="${focus}"
-          onblur="${blur}"
-          onchange="${add}"
-        />
-        <div
-          for="file-upload"
-          class="flex flex-row items-center justify-between w-full p-2"
-        >
-          <label
-            for="file-upload"
-            class="flex items-center cursor-pointer"
-            title="${state.translate('addFilesButton')}"
-          >
-            <svg class="w-6 h-6 mr-2 link-primary">
-              <use xlink:href="${assets.get('addfiles.svg')}#plus" />
-            </svg>
-            ${state.translate('addFilesButton')}
-          </label>
-          <div class="font-normal text-sm text-grey-70 dark:text-grey-40">
-            ${state.translate('totalSize', {
-              size: bytes(state.archive.size)
-            })}
+    <send-upload-area class="su-shell su-flex-1" id="wip">
+      <div class="su-core su-flex-1 su-flex-col">
+        ${list(
+          Array.from(state.archive.files)
+            .reverse()
+            .map(f =>
+              fileInfo(f, remove(f, state.translate('deleteButtonHover')))
+            ),
+          'su-filelist',
+          'su-fileitem su-enter-sm'
+        )}
+
+        <div class="su-wip-bar">
+          <input
+            id="file-upload"
+            class="su-visually-hidden"
+            type="file"
+            multiple
+            onfocus="${focus}"
+            onblur="${blur}"
+            onchange="${add}"
+          />
+          <div for="file-upload" class="su-wip-row">
+            <label
+              for="file-upload"
+              class="su-ghost su-cursor-pointer"
+              title="${state.translate('addFilesButton')}"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M7 2.5v9M2.5 7h9"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              ${state.translate('addFilesButton')}
+            </label>
+            <span class="su-mono su-muted">
+              ${state.translate('totalSize', {
+                size: bytes(state.archive.size)
+              })}
+            </span>
           </div>
         </div>
+
+        <div class="su-wip-controls">
+          ${expiryOptions(state, emit)} ${password(state, emit)}
+        </div>
+
+        <button
+          id="upload-btn"
+          class="su-btn su-mt-6 su-justify-center su-w-full"
+          title="${state.translate('uploadButton')}"
+          onclick="${upload}"
+        >
+          ${state.translate('uploadButton')}
+          <span class="su-btn-disc" aria-hidden="true">
+            ${glyphs.upload()}
+          </span>
+        </button>
       </div>
-      ${expiryOptions(state, emit)} ${password(state, emit)}
-      <button
-        id="upload-btn"
-        class="btn rounded-lg flex-shrink-0 focus:outline"
-        title="${state.translate('uploadButton')}"
-        onclick="${upload}"
-      >
-        ${state.translate('uploadButton')}
-      </button>
     </send-upload-area>
   `;
 
   function focus(event) {
-    event.target.nextElementSibling.firstElementChild.classList.add('outline');
+    event.target.nextElementSibling.firstElementChild.classList.add('su-focus');
   }
 
   function blur(event) {
     event.target.nextElementSibling.firstElementChild.classList.remove(
-      'outline'
+      'su-focus'
     );
   }
 
@@ -407,9 +419,10 @@ module.exports.wip = function(state, emit) {
 
     emit('addFiles', { files: newFiles });
     setTimeout(() => {
-      document
-        .querySelector('#wip > ul > li:first-child')
-        .scrollIntoView({ block: 'center' });
+      const first = document.querySelector('#wip > ul > li:first-child');
+      if (first) {
+        first.scrollIntoView({ block: 'center' });
+      }
     });
   }
 
@@ -417,7 +430,7 @@ module.exports.wip = function(state, emit) {
     return html`
       <input
         type="image"
-        class="self-center text-white ml-4 h-4 hover:opacity-75 focus:outline"
+        class="su-file-remove"
         alt="${desc}"
         title="${desc}"
         src="${assets.get('close-16.svg')}"
@@ -436,29 +449,28 @@ module.exports.uploading = function(state, emit) {
   const progressPercent = percent(progress);
   const archive = state.archive;
   return html`
-    <send-upload-area
-      id="${archive.id}"
-      class="flex flex-col items-start rounded-default shadow-light bg-white p-4 w-full dark:bg-grey-90"
-    >
-      ${archiveInfo(archive)}
-      <div class="text-xs opacity-75 w-full mt-2 mb-2">
-        ${expiryInfo(state.translate, {
-          dlimit: state.archive.dlimit,
-          dtotal: 0,
-          expiresAt: Date.now() + 500 + state.archive.timeLimit * 1000
-        })}
+    <send-upload-area id="${archive.id}" class="su-shell su-flex-1">
+      <div class="su-core su-p-8 su-flex-1">
+        ${archiveInfo(archive)}
+        <p class="su-muted su-text-sm su-mt-3">
+          ${expiryInfo(state.translate, {
+            dlimit: state.archive.dlimit,
+            dtotal: 0,
+            expiresAt: Date.now() + 500 + state.archive.timeLimit * 1000
+          })}
+        </p>
+        <p class="su-progress-value su-mt-6">${progressPercent}</p>
+        <progress class="su-progress" value="${progress}">
+          ${progressPercent}
+        </progress>
+        <button
+          class="su-ghost su-mt-8"
+          onclick=${cancel}
+          title="${state.translate('deletePopupCancel')}"
+        >
+          ${state.translate('deletePopupCancel')}
+        </button>
       </div>
-      <div class="link-primary text-sm font-medium mt-2">
-        ${progressPercent}
-      </div>
-      <progress class="my-3" value="${progress}">${progressPercent}</progress>
-      <button
-        class="link-primary self-end font-medium"
-        onclick=${cancel}
-        title="${state.translate('deletePopupCancel')}"
-      >
-        ${state.translate('deletePopupCancel')}
-      </button>
     </send-upload-area>
   `;
 
@@ -475,7 +487,7 @@ module.exports.empty = function(state, emit) {
       ? ''
       : html`
           <button
-            class="center font-medium text-sm link-primary mt-4 mb-2"
+            class="su-signin"
             onclick="${event => {
               event.stopPropagation();
               emit('signup-cta', 'drop');
@@ -488,64 +500,77 @@ module.exports.empty = function(state, emit) {
         `;
   const uploadNotice = state.WEB_UI.UPLOAD_AREA_NOTICE_HTML
     ? html`
-        <p
-          class="w-full mt-8 p-2 border-default dark:border-grey-70 rounded-default text-orange-60 bg-yellow-40 text-center leading-normal"
-        >
+        <p class="su-notice su-mt-6">
           ${raw(state.WEB_UI.UPLOAD_AREA_NOTICE_HTML)}
         </p>
       `
     : '';
 
   return html`
-    <send-upload-area
-      class="flex flex-col items-center justify-center border-2 border-dashed border-grey-transparent rounded-default px-6 py-16 h-full w-full dark:border-grey-60"
-      onclick="${e => {
-        if (e.target.tagName !== 'LABEL') {
-          document.getElementById('file-upload').click();
-        }
-      }}"
-    >
-      <svg class="w-10 h-10 link-primary">
-        <use xlink:href="/${assets.get('addfiles.svg')}#plus" />
-      </svg>
-      <div class="pt-6 pb-2 text-center text-lg font-bold tracking-wide">
-        ${state.translate('dragAndDropFiles')}
-      </div>
-      <div class="pb-6 text-center text-base">
-        ${state.translate('orClickWithSize', {
-          size: bytes(state.user.maxSize)
-        })}
-      </div>
-      <input
-        id="file-upload"
-        class="opacity-0 w-0 h-0 appearance-none absolute overflow-hidden"
-        type="file"
-        multiple
-        onfocus="${focus}"
-        onblur="${blur}"
-        onchange="${add}"
-        onclick="${e => e.stopPropagation()}"
-      />
-      <label
-        for="file-upload"
-        role="button"
-        class="btn rounded-lg flex items-center mt-4"
-        title="${state.translate('addFilesButton', {
-          size: bytes(state.user.maxSize)
-        })}"
+    <send-upload-area class="su-shell su-flex-1" id="empty">
+      <div
+        class="su-drop su-core"
+        onclick="${e => {
+          if (e.target.tagName !== 'LABEL') {
+            document.getElementById('file-upload').click();
+          }
+        }}"
       >
-        ${state.translate('addFilesButton')}
-      </label>
-      ${upsell} ${uploadNotice}
+        <div class="su-halo su-enter su-d2">
+          <svg class="su-halo-icon">
+            <use xlink:href="/${assets.get('addfiles.svg')}#plus" />
+          </svg>
+        </div>
+
+        ${eyebrow(state, 'su-mt-8 su-enter su-d3')}
+
+        <h1
+          class="su-mt-5 su-mb-3 su-drop-title su-enter su-d4"
+          title="${state.translate('dragAndDropFiles')}"
+        >
+          ${state.translate('dragAndDropFiles')}
+        </h1>
+
+        <p class="su-drop-sub su-enter su-d5">
+          ${state.translate('orClickWithSize', {
+            size: bytes(state.user.maxSize)
+          })}
+        </p>
+
+        <input
+          id="file-upload"
+          class="su-visually-hidden"
+          type="file"
+          multiple
+          onfocus="${focus}"
+          onblur="${blur}"
+          onchange="${add}"
+          onclick="${e => e.stopPropagation()}"
+        />
+        <label
+          for="file-upload"
+          role="button"
+          class="su-btn su-mt-8 su-enter su-d6"
+          title="${state.translate('addFilesButton', {
+            size: bytes(state.user.maxSize)
+          })}"
+        >
+          ${state.translate('addFilesButton')}
+          <span class="su-btn-disc" aria-hidden="true">
+            ${glyphs.arrow()}
+          </span>
+        </label>
+        ${upsell} ${uploadNotice}
+      </div>
     </send-upload-area>
   `;
 
   function focus(event) {
-    event.target.nextElementSibling.classList.add('bg-primary', 'outline');
+    event.target.nextElementSibling.classList.add('su-focus');
   }
 
   function blur(event) {
-    event.target.nextElementSibling.classList.remove('bg-primary', 'outline');
+    event.target.nextElementSibling.classList.remove('su-focus');
   }
 
   function add(event) {
@@ -565,15 +590,20 @@ module.exports.preview = function(state, emit) {
   const details = single
     ? ''
     : html`
-        <div class="mt-4 h-full md:h-48 overflow-y-auto">
-          ${archiveDetails(state.translate, archive)}
-        </div>
+        <ul class="su-manifest">
+          ${archive.manifest.files.map(
+            f => html`
+              <li class="su-manifest-item">
+                <span class="word-break-all">${f.name}</span>
+                <span class="su-manifest-size">${bytes(f.size)}</span>
+              </li>
+            `
+          )}
+        </ul>
       `;
   const notice = state.WEB_UI.DOWNLOAD_NOTICE_HTML
     ? html`
-        <p
-          class="w-full mt-4 p-2 border-default dark:border-grey-70 rounded-default text-orange-60 bg-yellow-40 text-center leading-normal"
-        >
+        <p class="su-notice su-mt-5">
           ${raw(state.WEB_UI.DOWNLOAD_NOTICE_HTML)}
         </p>
       `
@@ -581,19 +611,17 @@ module.exports.preview = function(state, emit) {
   const sponsor = state.WEB_UI.SHOW_THUNDERBIRD_SPONSOR
     ? html`
         <a
-          class="w-full mt-5 mb-2 p-2 border-default dark:border-grey-70 rounded-default text-orange-60 bg-yellow-40 text-center leading-normal"
+          class="su-notice su-notice-link su-mt-3"
           href="https://www.thunderbird.net/"
+          rel="noopener noreferrer"
+          target="_blank"
         >
-          <svg
-            width="30"
-            height="30"
-            class="m-2 mr-3 d-inline-block align-middle"
-          >
+          <svg width="18" height="18" class="su-notice-icon">
             <image
               xlink:href="${assets.get('thunderbird-icon.svg')}"
               src="${assets.get('thunderbird-icon.svg')}"
-              width="30"
-              height="30"
+              width="18"
+              height="18"
             />
           </svg>
           ${state.translate('sponsoredByThunderbird')}
@@ -602,21 +630,22 @@ module.exports.preview = function(state, emit) {
     : '';
 
   return html`
-    <send-archive
-      class="flex flex-col max-h-full bg-white p-4 w-full md:w-128 dark:bg-grey-90"
-    >
-      <div class="border-default rounded-default py-3 px-6 dark:border-grey-70">
+    <send-archive class="su-shell su-w-full su-mt-8 su-enter-sm">
+      <div class="su-core su-card">
         ${archiveInfo(archive)} ${details}
+        <button
+          id="download-btn"
+          class="su-btn su-mt-6 su-justify-center su-w-full"
+          title="${state.translate('downloadButtonLabel')}"
+          onclick=${download}
+        >
+          ${state.translate('downloadButtonLabel')}
+          <span class="su-btn-disc" aria-hidden="true">
+            ${glyphs.downloadDisc()}
+          </span>
+        </button>
+        ${notice} ${sponsor}
       </div>
-      <button
-        id="download-btn"
-        class="btn rounded-lg mt-4 w-full flex-shrink-0 focus:outline"
-        title="${state.translate('downloadButtonLabel')}"
-        onclick=${download}
-      >
-        ${state.translate('downloadButtonLabel')}
-      </button>
-      ${notice} ${sponsor}
     </send-archive>
   `;
 
@@ -632,14 +661,19 @@ module.exports.downloading = function(state) {
   const progress = state.transfer.progressRatio;
   const progressPercent = percent(progress);
   return html`
-    <send-archive
-      class="flex flex-col bg-white rounded-default shadow-light p-4 w-full max-w-sm md:w-128 dark:bg-grey-90"
-    >
-      ${archiveInfo(archive)}
-      <div class="link-primary text-sm font-medium mt-2">
-        ${progressPercent}
+    <send-archive class="su-shell su-w-full su-mt-8 su-enter-sm">
+      <div class="su-core su-card">
+        ${archiveInfo(archive)}
+        <p class="su-progress-value su-mt-6">
+          ${progressPercent}
+          <span class="su-mono su-muted">
+            ${state.translate('decryptingFile')}
+          </span>
+        </p>
+        <progress class="su-progress" value="${progress}"
+          >${progressPercent}</progress
+        >
       </div>
-      <progress class="my-3" value="${progress}">${progressPercent}</progress>
     </send-archive>
   `;
 };

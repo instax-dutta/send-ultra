@@ -1,57 +1,94 @@
 const html = require('choo/html');
 const modal = require('./modal');
+const assets = require('../../common/assets');
+const glyphs = require('./glyphs');
+const eyebrow = require('./eyebrow');
 
 module.exports = function(state, emit) {
-  let strings = {};
-  let why = '';
-  let url = '';
+  const outdated = state.params.reason === 'outdated';
 
-  if (state.params.reason !== 'outdated') {
-    strings = unsupportedStrings(state);
-    why = html`
-      <a
-        class="text-primary"
-        href="https://github.com/timvisee/send/blob/master/docs/faq.md#why-is-my-browser-not-supported"
-      >
-        ${state.translate('notSupportedLink')}
-      </a>
-    `;
-    url =
-      'https://www.mozilla.org/firefox/new/?utm_campaign=send-acquisition&utm_medium=referral&utm_source=send.firefox.com';
-  } else {
-    strings = outdatedStrings(state);
-    url = 'https://support.mozilla.org/kb/update-firefox-latest-version';
-  }
+  const url = outdated
+    ? 'https://support.mozilla.org/kb/update-firefox-latest-version'
+    : 'https://www.mozilla.org/firefox/new/?utm_campaign=send-acquisition&utm_medium=referral&utm_source=send.firefox.com';
+
+  const button = outdated
+    ? state.translate('updateFirefox')
+    : state.translate('downloadFirefox');
 
   return html`
-    <main class="main">
+    <main class="su-main">
       ${state.modal && modal(state, emit)}
-      <section
-        class="flex flex-col items-center justify-center text-center bg-white m-6 px-6 py-8 border-default border-grey-30 md:border-none md:px-12 md:py-16 shadow-default w-full md:h-full dark:bg-grey-90"
-      >
-        <h1 class="text-3xl font-bold">${strings.header}</h1>
-        <p class="mt-4 mb-8 max-w-md leading-normal">${strings.description}</p>
-        ${why}
-        <a href="${url}" class="btn rounded-lg mt-8 px-8">
-          ${strings.button}
-        </a>
-      </section>
+      <div class="su-col">
+        <div class="su-shell su-w-full su-enter">
+          <div class="su-core su-card su-text-center">
+            <div class="su-glyph su-glyph-warn su-mx-auto su-enter-sm">
+              ${glyphs.warning()}
+            </div>
+
+            ${eyebrow(state, 'su-mt-8 su-mx-auto su-enter-sm')}
+
+            <h1 class="su-title su-mt-5 su-enter-sm">
+              ${state.translate('notSupportedHeader')}
+            </h1>
+
+            <p class="su-lede su-mx-auto su-enter-sm">
+              ${outdated
+                ? state.translate('notSupportedOutdatedDetail')
+                : state.translate('notSupportedDescription')}
+            </p>
+
+            ${outdated
+              ? ''
+              : html`
+                  <p class="su-mt-5 su-enter-sm">
+                    <a
+                      class="su-ghost"
+                      href="https://github.com/timvisee/send/blob/master/docs/faq.md#why-is-my-browser-not-supported"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      ${state.translate('notSupportedLink')}
+                      <span class="su-btn-disc" aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M5 9L9 5M9 5H5.5M9 5V8.5"
+                            stroke="currentColor"
+                            stroke-width="1.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    </a>
+                  </p>
+                `}
+
+            <a
+              class="su-btn su-mt-8 su-enter-sm"
+              href="${url}"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              ${button}
+              <span class="su-btn-disc" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <image
+                    xlink:href="${assets.get('firefox_logo-only.svg')}"
+                    src="${assets.get('firefox_logo-only.svg')}"
+                    width="18"
+                    height="18"
+                  />
+                </svg>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
     </main>
   `;
 };
-
-function outdatedStrings(state) {
-  return {
-    header: state.translate('notSupportedHeader'),
-    description: state.translate('notSupportedOutdatedDetail'),
-    button: state.translate('updateFirefox')
-  };
-}
-
-function unsupportedStrings(state) {
-  return {
-    header: state.translate('notSupportedHeader'),
-    description: state.translate('notSupportedDescription'),
-    button: state.translate('downloadFirefox')
-  };
-}

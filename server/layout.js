@@ -3,9 +3,16 @@ const assets = require('../common/assets');
 const initScript = require('./initScript');
 
 module.exports = function(state, body = '') {
-  const custom_css = state.ui.assets.custom_css !== ''
-    ? html`<link rel="stylesheet" type="text/css" href="${state.ui.assets.custom_css}" />`
-    : ''
+  const custom_css =
+    state.ui.assets.custom_css !== ''
+      ? html`
+          <link
+            rel="stylesheet"
+            type="text/css"
+            href="${state.ui.assets.custom_css}"
+          />
+        `
+      : '';
 
   return html`
     <!DOCTYPE html>
@@ -32,7 +39,6 @@ module.exports = function(state, body = '') {
         <meta name="msapplication-TileColor" content="#220033" />
 
         <link rel="manifest" href="/app.webmanifest" />
-        <link rel="stylesheet" type="text/css" href="/inter.css" />
         <style nonce=${state.cspNonce}>
           :root {
             --color-primary: ${state.ui.colors.primary};

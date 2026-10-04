@@ -1,36 +1,36 @@
 const html = require('choo/html');
+const glyphs = require('./glyphs');
 
 module.exports = function(name, url) {
   const dialog = function(state, emit, close) {
     return html`
-      <send-share-dialog
-        class="flex flex-col items-center text-center p-4 max-w-sm m-auto"
-      >
-        <h1 class="text-3xl font-bold my-4">
-          ${state.translate('notifyUploadEncryptDone')}
-        </h1>
-        <p
-          class="font-normal leading-normal text-grey-80 word-break-all dark:text-grey-40"
-        >
-          ${state.translate('shareLinkDescription')}<br />
-          ${name}
+      <send-share-dialog class="su-dialog">
+        <h1 class="su-title">${state.translate('notifyUploadEncryptDone')}</h1>
+
+        <p class="su-lede su-mt-5">
+          ${state.translate('shareLinkDescription')}
+          <span class="word-break-all">${name}</span>
         </p>
+
         <input
           type="text"
           id="share-url"
-          class="w-full my-4 border-default rounded-lg leading-loose h-12 px-2 py-1 dark:bg-grey-80"
+          class="su-input su-mono su-mt-6"
           value="${url}"
           readonly="true"
         />
+
         <button
-          class="btn rounded-lg w-full flex-shrink-0 focus:outline"
+          class="su-btn su-mt-6 su-justify-center su-w-full"
           onclick="${share}"
           title="${state.translate('shareLinkButton')}"
         >
           ${state.translate('shareLinkButton')}
+          <span class="su-btn-disc" aria-hidden="true">${glyphs.arrow()}</span>
         </button>
+
         <button
-          class="link-primary my-4 font-medium cursor-pointer focus:outline"
+          class="su-link-btn su-mt-4"
           onclick="${close}"
           title="${state.translate('okButton')}"
         >

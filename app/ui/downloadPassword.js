@@ -1,56 +1,59 @@
 const html = require('choo/html');
+const glyphs = require('./glyphs');
+const eyebrow = require('./eyebrow');
 
 module.exports = function(state, emit) {
   const fileInfo = state.fileInfo;
   const invalid = fileInfo.password === null;
 
   const div = html`
-    <div
-      class="h-full w-full flex flex-col items-center justify-center bg-white py-8 max-w-md mx-auto dark:bg-grey-90"
-    >
-      <h1 class="text-3xl font-bold mb-4">
+    <div class="su-col su-enter">
+      <div class="su-glyph su-mx-auto su-enter-sm">${glyphs.lock()}</div>
+
+      ${eyebrow(state, 'su-mt-8 su-mx-auto su-enter-sm')}
+
+      <h1 class="su-title su-mt-5 su-mx-auto su-enter-sm">
         ${state.translate('downloadTitle')}
       </h1>
-      <p
-        class="w-full mb-4 text-center text-grey-80 dark:text-grey-40 leading-normal"
-      >
+
+      <p class="su-lede su-mx-auto su-enter-sm">
         ${state.translate('downloadDescription')}
       </p>
-      <form
-        class="flex flex-row flex-nowrap w-full md:w-4/5"
-        onsubmit="${checkPassword}"
-        data-no-csrf
-      >
+
+      <form class="su-split su-mt-8" onsubmit="${checkPassword}" data-no-csrf>
         <input
           id="autocomplete-decoy"
-          class="hidden"
+          class="su-visually-hidden"
           type="password"
           value="lol"
         />
         <input
           id="password-input"
-          class="w-full border-l border-t border-b rounded-l-lg rounded-r-none ${invalid
-            ? 'border-red dark:border-red-40'
-            : 'border-grey'} leading-loose px-2 py-1 dark:bg-grey-80"
+          class="su-input ${invalid ? 'su-input-rejected' : ''}"
           maxlength="4096"
           autocomplete="off"
           placeholder="${state.translate('unlockInputPlaceholder')}"
+          aria-invalid="${invalid ? 'true' : 'false'}"
+          aria-describedby="password-error"
           oninput="${inputChanged}"
           type="password"
         />
-        <input
+        <button
           type="submit"
           id="password-btn"
-          class="btn rounded-r-lg rounded-l-none ${invalid
-            ? 'bg-red hover:bg-red focus:bg-red dark:bg-red-40'
-            : ''}"
-          value="${state.translate('unlockButtonLabel')}"
+          class="su-btn"
           title="${state.translate('unlockButtonLabel')}"
-        />
+        >
+          ${state.translate('unlockButtonLabel')}
+          <span class="su-btn-disc" aria-hidden="true">
+            ${glyphs.arrow()}
+          </span>
+        </button>
       </form>
+
       <label
         id="password-error"
-        class="${invalid ? '' : 'invisible'} text-red dark:text-red-40 my-4"
+        class="su-error ${invalid ? '' : 'su-error-off'}"
         for="password-input"
       >
         ${state.translate('passwordTryAgain')}
@@ -67,15 +70,9 @@ module.exports = function(state, emit) {
     event.preventDefault();
     const label = document.getElementById('password-error');
     const input = document.getElementById('password-input');
-    const btn = document.getElementById('password-btn');
-    label.classList.add('invisible');
-    input.classList.remove('border-red', 'dark:border-red-40');
-    btn.classList.remove(
-      'bg-red',
-      'hover:bg-red',
-      'focus:bg-red',
-      'dark:bg-red-40'
-    );
+    label.classList.add('su-error-off');
+    input.classList.remove('su-input-rejected');
+    input.setAttribute('aria-invalid', 'false');
   }
 
   function checkPassword(event) {

@@ -13,3 +13,16 @@ rules:
   at-rule-no-unknown: null
   # Conflicts with prettier
   string-quotes: null
+
+  # The Send Ultra interface uses -webkit- prefixes for backdrop-filter and the
+  # mask fallback because browserslist still targets Edge 18 and older Safari,
+  # where the unprefixed properties are unsupported. Autoprefixer does not emit
+  # these because there is no standard-compiler signal for them.
+  property-no-vendor-prefix: null
+  value-no-vendor-prefix: null
+
+  # The new component rules (.su-footer a, .su-modal-core a) are intentionally
+  # more specific than the legacy element selectors that precede them, so the
+  # cascade-order warnings are expected rather than defects.
+  no-descending-specificity: null
+
