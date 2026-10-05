@@ -118,3 +118,4 @@ rather than only in a conversation.
 - [x] G19: the browser-driven frontend suite passes on the verify host
   CHECK: node scripts/verify/remote-run.mjs npm run test:frontend
   EXPECT: 44 passing
+  EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/zsh; cwd=/Users/saiduttaabhishekdash/send-ultra; host=tejes@pelican; browser=node_modules/puppeteer/.local-chromium/linux-722234/chrome-linux/chrome; note=runs-on-the-verify-host-so-the-pushing-machine-needs-neither-a-redis-nor-a-browser; stability=10-consecutive-runs-clean-after-the-service-worker-wait
