@@ -1,0 +1,6 @@
+{
+  "host": "your-server",
+  "user": "deploy",
+  "remoteDir": "/home/deploy/send-verify",
+  "redisPort": "6399"
+}

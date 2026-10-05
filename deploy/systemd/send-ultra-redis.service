@@ -1,0 +1,28 @@
+# A Redis instance dedicated to Send Ultra.
+#
+# Not the system Redis. Send keeps file metadata here and nothing else, so
+# flushing it, restarting it or running the app against the wrong instance are
+# all ways to lose working links. Keep it on its own port and its own data
+# directory.
+#
+# Type=forking because redis-server daemonizes itself; do not "fix" that by
+# adding --daemonize no without also changing Type to simple and removing the
+# ExecStop below.
+[Unit]
+Description=Send Ultra Redis (dedicated instance)
+Documentation=https://github.com/instax-dutta/send-ultra
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/redis-server /etc/redis/send-ultra.conf --daemonize yes
+ExecStop=/usr/bin/redis-cli -p 18101 shutdown nosave
+Restart=always
+RestartSec=3
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=full
+ReadWritePaths=/var/lib/send-ultra-redis
+
+[Install]
+WantedBy=multi-user.target

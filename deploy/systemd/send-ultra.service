@@ -1,0 +1,34 @@
+# Send Ultra, the application itself.
+#
+# Replace User/Group, WorkingDirectory and the two paths under /opt/send-ultra-data
+# if you are not reproducing the layout in deploy/README.md.
+[Unit]
+Description=Send Ultra
+Documentation=https://github.com/instax-dutta/send-ultra
+After=network.target send-ultra-redis.service
+Requires=send-ultra-redis.service
+
+[Service]
+Type=simple
+User=send
+Group=send
+WorkingDirectory=/opt/send-ultra
+EnvironmentFile=/opt/send-ultra/.env
+ExecStart=/usr/bin/node server/bin/prod.js
+Restart=always
+RestartSec=5
+# A 10 GiB upload is a long-lived WebSocket. Give it room before giving up.
+TimeoutStopSec=30
+KillSignal=SIGTERM
+StandardOutput=append:/opt/send-ultra-data/app.log
+StandardError=append:/opt/send-ultra-data/app.log
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+# The only path the service may write to. Ciphertext lives here, and so does the
+# log; everything else on the box stays read-only to it.
+ReadWritePaths=/opt/send-ultra-data
+
+[Install]
+WantedBy=multi-user.target

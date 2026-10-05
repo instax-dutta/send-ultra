@@ -1,3 +1,9 @@
+> **Prefer [../deploy/README.md](../deploy/README.md).** It describes the
+> deployment this repository is actually verified against: systemd units that
+> start at boot, a dedicated Redis, and a reaper so expired ciphertext does not
+> accumulate forever. The instructions below are the original upstream ones. They
+> use Apache and a `nohup` background process, which will not survive a reboot.
+
 ## Requirements
 
 This document describes how to do a full deployment of Send on your own Linux server. You will need:

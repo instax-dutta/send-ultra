@@ -1,0 +1,20 @@
+# Delete the ciphertext of uploads that expired long ago.
+#
+# Expiry is enforced on read, so an expired link cannot be used, but without
+# this the bytes stay on disk forever and the disk fills up over months.
+[Unit]
+Description=Send Ultra: delete ciphertext of expired uploads
+Documentation=https://github.com/instax-dutta/send-ultra
+After=network.target send-ultra-redis.service
+
+[Service]
+Type=oneshot
+User=send
+Group=send
+WorkingDirectory=/opt/send-ultra
+EnvironmentFile=/opt/send-ultra/.env
+ExecStart=/usr/bin/node scripts/reap-expired.mjs
+# Reaping is housekeeping, never urgent, and should not compete with a
+# transfer that is actually in progress.
+Nice=10
+IOSchedulingClass=idle

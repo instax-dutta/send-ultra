@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the Send Ultra reaper daily
+
+[Timer]
+OnCalendar=*-*-* 04:17:00
+# Spread off the hour, where every other timer on the host is already firing.
+RandomizedDelaySec=45m
+# Catch up after a reboot, so a week-long outage does not leave a month of
+# ciphertext behind.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
