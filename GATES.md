@@ -107,3 +107,8 @@ rather than only in a conversation.
   CHECK: node scripts/verify/transfer-readout.mjs https://send.thevinod.lol
   EXPECT: TRANSFER READOUT VERIFIED
   EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; origin=https://send.thevinod.lol; browser=Chrome-131-via-SEND_CHROME_PATH; payload=96MiB; checks=withheld-until-warm,percent,time-remaining,throughput,no-placeholder,advances-over-time,completes,no-leftover-countdown,no-page-errors; observed=2m37s-left-at-1.4MB/s; negative-tests=wrong-timestamp-argument-caught,entity-rendering-caught; unit-tests=frontend-39-passing
+
+- [x] G18: expired ciphertext is deleted from disk, and in-flight uploads are never touched
+  CHECK: node scripts/verify/reaper.mjs
+  EXPECT: REAPER VERIFIED
+  EVIDENCE: pending
