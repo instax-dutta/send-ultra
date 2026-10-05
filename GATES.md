@@ -114,3 +114,7 @@ rather than only in a conversation.
   CHECK: node scripts/verify/remote-run.mjs node scripts/verify/reaper.mjs
   EXPECT: REAPER VERIFIED
   EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/zsh; cwd=/Users/saiduttaabhishekdash/send-ultra; host=tejes@pelican; redis=127.0.0.1:6399-real-not-mock; fixture-dir=/tmp/reap-Ug9vTK; checks=expired-file-removed,old-file-with-live-key-kept,in-flight-upload-kept,recent-file-kept,second-old-file-with-live-key-kept,malformed-name-ignored,second-pass-noop; observed=6-entries-1-removed-4-kept-0-errors; production-run=scanned-32-entries-0-removed-32-kept-age-threshold-608400s; schedule=send-ultra-reap.timer-OnCalendar-*-*-*-04:17:00-RandomizedDelaySec-45m-Persistent-true; systemd-Result=success
+
+- [x] G19: the browser-driven frontend suite passes on the verify host
+  CHECK: node scripts/verify/remote-run.mjs npm run test:frontend
+  EXPECT: 44 passing

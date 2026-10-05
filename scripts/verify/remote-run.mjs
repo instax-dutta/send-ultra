@@ -114,6 +114,14 @@ const EXCLUDES = [
   'coverage',
   '.codebase-memory',
   '.unlazy',
+  /*
+   * A Chrome installed locally for the browser-driven suites. It is a large
+   * platform-specific binary: syncing it uploads a macOS build to a Linux host,
+   * where the frontend suite then finds it, tries to execute it, and fails with
+   * a shell syntax error instead of running anything. The remote installs its own
+   * browser, or uses the Chromium that arrives with its npm install.
+   */
+  'chrome',
   // Runtime state that belongs to the deployment, not to the source tree.
   // Losing .env would take the service down on the next sync.
   '.env',

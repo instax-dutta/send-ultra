@@ -31,6 +31,8 @@ function onConsole(msg) {
  * explicit up-to-date Chrome is preferred; the bundled build is still used when
  * nothing better is present, so a clean checkout on another machine still runs.
  */
+const IS_MAC = process.platform === 'darwin';
+
 function findChrome() {
   const explicit = [
     process.env.CHROME_PATH,
@@ -57,6 +59,11 @@ function findChrome() {
  * The directory holds a .metadata file alongside the version folders, so every
  * entry is checked before it is descended into rather than assumed to be a
  * directory; reading it as one throws ENOTDIR.
+ *
+ * The layout is platform-specific and so is the search. A macOS .app bundle is
+ * not a Linux executable: matching on the file name alone handed a macOS build
+ * to a Linux host, which failed as a shell syntax error with nothing pointing at
+ * the browser at all.
  */
 function searchForBrowser(dir, depth) {
   if (depth > 6) {
@@ -74,8 +81,7 @@ function searchForBrowser(dir, depth) {
     }
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      // macOS puts the binary in Contents/MacOS inside the .app bundle.
-      if (/^Contents$/.test(entry.name)) {
+      if (IS_MAC && entry.name === 'Contents') {
         const bin = path.join(full, 'MacOS');
         if (fs.existsSync(bin)) {
           for (const f of fs.readdirSync(bin)) {
@@ -89,8 +95,12 @@ function searchForBrowser(dir, depth) {
       if (hit) {
         return hit;
       }
-    } else if (entry.isFile() && /^chrome$|^chromium$/.test(entry.name)) {
-      // Linux layout: a bare executable next to the resources directory.
+    } else if (
+      entry.isFile() &&
+      !IS_MAC &&
+      /^(chrome|chrome-headless-shell|chromium)$/.test(entry.name)
+    ) {
+      // Linux layout: a bare executable beside its resources directory.
       try {
         fs.accessSync(full, fs.constants.X_OK);
         return full;
@@ -162,10 +172,19 @@ const server = app.listen(async function() {
      * on a busy run and was reported as a timeout with nothing to suggest the
      * build was still going.
      */
-    await page.waitFor(() => typeof runner.testResults !== 'undefined', {
-      polling: 1000,
-      timeout: 180000
-    });
+    /*
+     * window.runner is assigned only once the service worker has taken control
+     * of the page, so it is legitimately absent for a moment. The guard keeps
+     * the wait polling instead of throwing on undefined and stalling until the
+     * navigation timeout.
+     */
+    await page.waitFor(
+      () => window.runner && window.runner.testResults !== undefined,
+      {
+        polling: 1000,
+        timeout: 180000
+      }
+    );
     const results = await page.evaluate(() => runner.testResults);
     const coverage = await page.evaluate(() => __coverage__);
     if (coverage) {
