@@ -235,13 +235,7 @@ async function upload(
       onprogress(size);
       size += buf.length;
       state = await reader.read();
-      while (
-        ws.bufferedAmount > ECE_RECORD_SIZE * 2 &&
-        ws.readyState === WebSocket.OPEN &&
-        !canceller.cancelled
-      ) {
-        await delay();
-      }
+      await waitForSocketDrain(ws, canceller);
     }
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(new Uint8Array([0])); //EOF
@@ -257,6 +251,39 @@ async function upload(
   } finally {
     if (![WebSocket.CLOSED, WebSocket.CLOSING].includes(ws.readyState)) {
       ws.close();
+    }
+  }
+}
+
+/*
+ * Hold off while the socket's send buffer is over the limit.
+ *
+ * The condition is unchanged from the original inline loop: stop once
+ * bufferedAmount drops to ECE_RECORD_SIZE * 2, stop if the socket closes, stop
+ * if the user cancels. Only the poll interval changed.
+ *
+ * It used to be a bare `await delay()`, which defaults to 100ms. That pinned
+ * the browser upload to roughly ECE_RECORD_SIZE * 2 per 100ms, about 1.28 MB/s,
+ * which measured exactly: 256 MiB took 212s in a browser while the same bytes
+ * over the same connection from Node took 25s. On any link faster than about
+ * 1.3 MB/s the client was sleeping through the bandwidth it had been given.
+ *
+ * WebSocket exposes no drain event, so the buffer still has to be polled, but it
+ * is polled from 1ms and backs off to 16ms so a briefly-full buffer costs a
+ * millisecond instead of a tenth of a second, and a genuinely congested socket
+ * does not spin.
+ */
+async function waitForSocketDrain(ws, canceller) {
+  let wait = 1;
+  while (
+    ws.bufferedAmount > ECE_RECORD_SIZE * 2 &&
+    ws.readyState === WebSocket.OPEN &&
+    !canceller.cancelled
+  ) {
+    // eslint-disable-next-line no-await-in-loop
+    await delay(wait);
+    if (wait < 16) {
+      wait *= 2;
     }
   }
 }
