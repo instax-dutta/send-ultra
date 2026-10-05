@@ -15,12 +15,26 @@ const testSalt = 'I1BsxtFttlv3u_Oo94xnmw';
 const keystr = 'yqdlZ-tYemfogSmv7Ws5PQ';
 
 const buffer = Buffer.from(str);
+
+/*
+ * The salt and key are decoded here instead of being handed over as base64url
+ * strings.
+ *
+ * http_ece's decode() runs Buffer.from(value, 'base64url') for string inputs,
+ * and no release of the npm buffer polyfill implements that encoding: 4.9.2,
+ * 5.7.1 and 6.0.3 all reject it. Only Node's core Buffer has it, and this suite
+ * runs in a browser, which is why the file could not load at all.
+ *
+ * decode() returns non-strings untouched, so passing Buffers skips that branch
+ * entirely. They come from the app's own b64ToArray, so the fixture and the
+ * implementation under test cannot disagree about what the string means.
+ */
 const params = {
   version: 'aes128gcm',
   rs: rs,
-  salt: testSalt,
+  salt: Buffer.from(b64ToArray(testSalt)),
   keyid: '',
-  key: keystr
+  key: Buffer.from(b64ToArray(keystr))
 };
 
 const encrypted = ece.encrypt(buffer, params);
