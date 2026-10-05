@@ -75,7 +75,7 @@ export default class FileSender extends Nanobus {
       bearerToken,
       p => {
         this.progress = [p, totalSize];
-        this.timing.update(p, totalSize);
+        this.timing.update(p);
         this.emit('progress');
       }
     );

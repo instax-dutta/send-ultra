@@ -93,24 +93,37 @@ try {
     timeout: 30000
   });
 
-  await page.evaluate(
-    (name, b64) => {
-      const bin = atob(b64);
-      const buf = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) {
-        buf[i] = bin.charCodeAt(i);
-      }
-      const dt = new DataTransfer();
-      dt.items.add(new File([buf], name, { type: 'application/octet-stream' }));
-      const input = document.querySelector('#empty #file-upload');
-      input.files = dt.files;
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    },
-    path.basename(payloadPath),
-    // 96 MiB is too much to inline through the CDP bridge in one call on every
-    // engine, so it is handed over in slices.
-    payload.toString('base64')
+  /*
+   * Attach the file through the real input via DOM.setFileInputFiles.
+   *
+   * Not page.evaluate with a base64 payload: passing 96 MiB through the CDP
+   * bridge as an argument closes the render target outright. This is also the
+   * more faithful route, since it is how a user's file actually arrives.
+   */
+  const client = await page.target().createCDPSession();
+  await client.send('DOM.enable');
+  const doc = await client.send('DOM.getDocument');
+  const inputNode = await client.send('DOM.querySelector', {
+    nodeId: doc.root.nodeId,
+    selector: '#empty #file-upload'
+  });
+  check('readout: real file input found', !!inputNode.nodeId);
+  await client.send('DOM.setFileInputFiles', {
+    files: [payloadPath],
+    nodeId: inputNode.nodeId
+  });
+  // Belt and braces: some engines set the files without firing change.
+  await page.evaluate(() => {
+    const el = document.querySelector('#empty #file-upload');
+    if (el && el.files && el.files.length) {
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  const staged = await page.evaluate(
+    () => document.querySelectorAll('#wip .su-fileitem').length
   );
+  check('readout: file staged for upload', staged > 0, `${staged} item(s)`);
 
   await new Promise(r => setTimeout(r, 1500));
   await page.click('#upload-btn');

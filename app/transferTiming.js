@@ -35,9 +35,14 @@ export class TransferTiming {
   }
 
   /*
-   * Called with the running byte total. The first call anchors the clock at
-   * zero bytes rather than at construction, because a sender spends its first
-   * ticks encrypting, which would otherwise be counted as transfer time.
+   * Called with the running byte total. The first non-zero call anchors the
+   * clock rather than the constructor doing it, because a sender spends its
+   * first ticks encrypting, which would otherwise be billed to the transfer.
+   *
+   * The second parameter is a timestamp in milliseconds, not a size. Passing a
+   * byte count here once produced a start date of 1970 and an estimate
+   * measured in millions of hours, which is a spectacularly unhelpful way to
+   * learn that argument order matters.
    */
   update(bytesSent, now = Date.now()) {
     if (!this.startedAtKnown && bytesSent > 0) {

@@ -184,7 +184,7 @@ function transferReadout(state) {
           <span>${bytes(rate)}/s</span>
         `
       : html`
-          <span class="su-readout-pending">&mdash;</span>
+          <span class="su-readout-pending">—</span>
         `;
 
   return html`
@@ -192,7 +192,7 @@ function transferReadout(state) {
       <span class="su-readout-value">${pct}</span>
       <span class="su-readout-meta">
         ${remaining}
-        <span class="su-readout-sep">&middot;</span>
+        <span class="su-readout-sep">·</span>
         ${speed}
       </span>
     </div>

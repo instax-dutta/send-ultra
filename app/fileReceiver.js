@@ -94,7 +94,7 @@ export default class FileReceiver extends Nanobus {
       this.keychain,
       p => {
         this.progress = [p, this.fileInfo.size];
-        this.timing.update(p, this.fileInfo.size);
+        this.timing.update(p);
         this.emit('progress');
       }
     );
@@ -132,7 +132,7 @@ export default class FileReceiver extends Nanobus {
     const start = Date.now();
     const onprogress = p => {
       this.progress = [p, this.fileInfo.size];
-      this.timing.update(p, this.fileInfo.size);
+      this.timing.update(p);
       this.emit('progress');
     };
 

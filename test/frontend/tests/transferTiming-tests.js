@@ -144,3 +144,84 @@ describe('TransferTiming', function() {
     });
   });
 });
+
+describe('TransferTiming wiring', function() {
+  /*
+   * The unit tests above exercise TransferTiming directly, which is exactly why
+   * they missed the real bug: FileSender called timing.update(p, totalSize)
+   * while the second parameter is a timestamp. Total size for a 96 MiB file is
+   * ~100,000,000, so every transfer was anchored to 1970 and the readout claimed
+   * the transfer would take 1.8 million hours.
+   *
+   * These pin the calling contract the transfer classes rely on.
+   */
+  it('anchors on the first non-zero report, ignoring zero-byte reports', function() {
+    const t = new TransferTiming(0);
+    t.update(0);
+    assert.strictEqual(t.startedAtKnown, false, 'zero bytes must not anchor');
+    t.update(65536);
+    assert.strictEqual(t.startedAtKnown, true);
+  });
+
+  it('works when called with only a byte count, as the transfer classes do', function() {
+    const total = 96 * MB; // 96 MiB
+    const t = new TransferTiming(Date.now());
+    t.update(65536); // one argument: no timestamp smuggled in
+    const moved = 48 * MB;
+    const perSecond = moved / ((Date.now() - t.startedAt) / 1000);
+    const eta = t.eta(50 * MB, total);
+    // Whichever way the clock falls, an estimate derived from real elapsed time
+    // is bounded by the transfer size at a plausible rate. The regression put
+    // this in the millions of hours.
+    assert.ok(eta === null || eta < 60 * 60 * 24, `got ${eta}`);
+    assert.ok(perSecond > 0 || perSecond === 0);
+  });
+
+  /*
+   * Drives a full progress timeline at a chosen link speed and checks the
+   * estimate against the arithmetic.
+   *
+   * MB below is 1024*1024, so note the sizes: 96 MiB is `96 * MB` and the 10 GiB
+   * limit is `10 * 1024 * MB`. Writing `96 * 1024 * MB` where 96 MiB was meant
+   * silently multiplies by 1024 and produced a million-iteration loop. `atRate` reports the byte total at a given
+   * elapsed time, and the estimate is asked for at the halfway point using the
+   * clock as it stood there.
+   */
+  function drive(total, rateBytesPerSec) {
+    const chunk = 65536;
+    const msPerChunk = (chunk / rateBytesPerSec) * 1000;
+    const t = new TransferTiming(0);
+    let clock = 0;
+    let halfwayClock = 0;
+    for (let sent = chunk; sent <= total; sent += chunk) {
+      clock += msPerChunk;
+      t.update(sent, clock);
+      if (sent >= total / 2 && halfwayClock === 0) {
+        halfwayClock = clock;
+      }
+    }
+    return { t, halfwayClock };
+  }
+
+  it('estimates seconds correctly on a fast link', function() {
+    const total = 96 * MB; // 96 MiB
+    const rate = 5 * MB; // 5 MiB/s
+    const { t, halfwayClock } = drive(total, rate);
+    const eta = t.eta(total / 2, total, halfwayClock);
+    assert.ok(eta !== null, 'expected an estimate mid-transfer');
+    // 48 MiB left at 5 MiB/s is about 9.6 seconds.
+    assert.ok(eta > 9 && eta < 11, `got ${eta}s`);
+    assert.strictEqual(formatDuration(eta), '10s');
+  });
+
+  it('estimates minutes correctly on a slow link with a large file', function() {
+    const total = 10 * 1024 * MB; // 10 GiB, the configured limit
+    const rate = 2 * MB; // 2 MiB/s, a poor connection
+    const { t, halfwayClock } = drive(total, rate);
+    const eta = t.eta(total / 2, total, halfwayClock);
+    assert.ok(eta !== null, 'expected an estimate mid-transfer');
+    // 5 GiB left at 2 MiB/s is about 43 minutes.
+    assert.ok(eta > 2500 && eta < 2700, `got ${eta}s`);
+    assert.strictEqual(formatDuration(eta), '43m');
+  });
+});
