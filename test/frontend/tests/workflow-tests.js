@@ -13,6 +13,25 @@ const options = { noSave: true || !headless, stream: true }; // only run the sav
 const blob = new Blob([new ArrayBuffer(1024 * 128)], { type: 'text/plain' });
 blob.name = 'test.txt';
 const archive = new Archive([blob]);
+
+/*
+ * A payload large enough for a cancel to land mid-transfer.
+ *
+ * The server only counts a download once the response finishes, and it
+ * deliberately skips the count when the request is aborted, so "a cancelled
+ * download does not consume a download" is real behaviour worth asserting. At
+ * 128KB the transfer completes inside a single tick on a fast machine: the
+ * cancel is requested after every byte has already been sent and counted, and
+ * the assertion then failed as "1 == 0" for reasons that had nothing to do with
+ * cancellation. Only the cancellation tests use this one, so the rest of the
+ * suite keeps the small blob.
+ */
+const cancelBlob = new Blob([new ArrayBuffer(1024 * 1024 * 12)], {
+  type: 'text/plain'
+});
+cancelBlob.name = 'cancel.txt';
+const cancelArchive = new Archive([cancelBlob]);
+
 navigator.serviceWorker.register('/serviceWorker.js');
 
 describe('Upload / Download flow', function() {
@@ -125,7 +144,7 @@ describe('Upload / Download flow', function() {
 
   it('can cancel the download', async function() {
     const fs = new FileSender();
-    const file = await fs.upload(archive);
+    const file = await fs.upload(cancelArchive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
@@ -134,12 +153,18 @@ describe('Upload / Download flow', function() {
     });
     await fr.getMetadata();
     fr.once('progress', () => fr.cancel());
+
+    // The rejection is collected rather than asserted inside a try block. An
+    // `assert.fail('not cancelled')` written there is itself thrown inside the
+    // try, so the catch swallows the very failure it exists to report.
+    let error = null;
     try {
       await fr.download(options);
-      assert.fail('not cancelled');
     } catch (e) {
-      assert.equal(e.message, '0');
+      error = e;
     }
+    assert.ok(error, 'download was not cancelled');
+    assert.equal(error.message, '0');
   });
 
   it('can increase download count on download', async function() {
@@ -160,7 +185,7 @@ describe('Upload / Download flow', function() {
 
   it('does not increase download count when download cancelled', async function() {
     const fs = new FileSender();
-    const file = await fs.upload(archive);
+    const file = await fs.upload(cancelArchive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
@@ -170,13 +195,20 @@ describe('Upload / Download flow', function() {
     await fr.getMetadata();
     fr.once('progress', () => fr.cancel());
 
+    // Same shape as above, and for the same reason: a fail-fast assertion inside
+    // the try would be caught here and reported as a download-count mismatch,
+    // which reads like a server bug and sends the next reader to the wrong file.
+    let error = null;
     try {
       await fr.download(options);
-      assert.fail('not cancelled');
     } catch (e) {
-      await file.updateDownloadCount();
-      assert.equal(file.dtotal, 0);
+      error = e;
     }
+    assert.ok(error, 'download was not cancelled');
+    assert.equal(error.message, '0');
+
+    await file.updateDownloadCount();
+    assert.equal(file.dtotal, 0);
   });
 
   it('can allow multiple downloads', async function() {

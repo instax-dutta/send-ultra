@@ -6,3 +6,5 @@ android/app/build
 app/locale.js
 app/capabilities.js
 app/qrcode.js
+# Chrome for Testing, installed by @puppeteer/browsers for the frontend suite
+chrome/

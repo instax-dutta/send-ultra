@@ -17,3 +17,6 @@ test/integration/downloads
 
 # unlazy gate ledger state and local artifacts
 .codebase-memory/
+
+# Chrome for Testing, installed by @puppeteer/browsers for the frontend suite
+chrome/

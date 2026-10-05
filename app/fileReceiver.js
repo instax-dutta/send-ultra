@@ -43,6 +43,19 @@ export default class FileReceiver extends Nanobus {
   }
 
   cancel() {
+    /*
+     * Record the intent, not just the request to the service worker.
+     *
+     * Chrome does not reliably report an abort as the 'cancelled' sentinel: when
+     * the connection is torn down first, the in-flight fetch rejects with its own
+     * network error and the caller is told "Failed to fetch". That happened often
+     * enough to make the cancel tests flaky, and it is a real defect rather than
+     * a test artefact -- a user who cancels a download should never be shown a
+     * network error, because nothing failed. The TODO further down notes the same
+     * unreliability. With this flag the catch can trust the user's own action and
+     * report a cancellation regardless of what the aborted fetch raised.
+     */
+    this.cancelled = true;
     if (this.downloadRequest) {
       this.downloadRequest.cancel();
     }
@@ -52,6 +65,7 @@ export default class FileReceiver extends Nanobus {
     this.msg = 'fileSizeProgress';
     this.state = 'initialized';
     this.progress = [0, 1];
+    this.cancelled = false;
     this.timing = new TransferTiming();
   }
 
@@ -88,6 +102,8 @@ export default class FileReceiver extends Nanobus {
   }
 
   async downloadBlob(noSave = false) {
+    // See downloadStream: cleared per attempt, not just in reset().
+    this.cancelled = false;
     this.state = 'downloading';
     this.downloadRequest = await downloadFile(
       this.fileInfo.id,
@@ -124,6 +140,9 @@ export default class FileReceiver extends Nanobus {
       this.state = 'complete';
     } catch (e) {
       this.downloadRequest = null;
+      if (this.cancelled || e === 'cancelled' || e.message === '400') {
+        throw new Error(0);
+      }
       throw e;
     }
   }
@@ -135,6 +154,11 @@ export default class FileReceiver extends Nanobus {
       this.timing.update(p);
       this.emit('progress');
     };
+
+    // Cleared per attempt: reset() is not necessarily called between downloads,
+    // and a stale flag here would turn the next genuine network failure into a
+    // silent cancellation.
+    this.cancelled = false;
 
     this.downloadRequest = {
       cancel: () => {
@@ -215,7 +239,7 @@ export default class FileReceiver extends Nanobus {
       this.state = 'complete';
     } catch (e) {
       this.downloadRequest = null;
-      if (e === 'cancelled' || e.message === '400') {
+      if (this.cancelled || e === 'cancelled' || e.message === '400') {
         throw new Error(0);
       }
       throw e;

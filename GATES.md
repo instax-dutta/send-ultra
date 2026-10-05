@@ -74,7 +74,7 @@ Scope: Land the audited correctness/security fixes and the server-side performan
   EVIDENCE: automatic-evidence=v1; definition-sha256=85025076a46864061f6b3f93a13fb2c6cce01f5c0fb1b4d9d1f835bacd6c0d69; exit=0; EXPECT=matched; output-sha256=c920ca72de82efd75daf5e333c8891d99db8186e857e379aae896d15874e929f; output-bytes=541; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; path=e53232291def/33 entries
 
 - [x] G14: the hosted service restarts on its own and survives a reboot
-  CHECK: node scripts/verify/remote-run.mjs node scripts/verify/deploy-health.mjs
+  CHECK: SEND_UNIT=send-ultra SEND_HEALTH_URL=http://127.0.0.1:18100/ node scripts/verify/remote-run.mjs node scripts/verify/deploy-health.mjs
   EXPECT: DEPLOYED SERVICE VERIFIED
   EVIDENCE: automatic-evidence=v1; definition-sha256=ef0b4de8567e70a615bcb136383ff57202fe9c6060cf25cd889838cbdf1250c5; exit=0; EXPECT=matched; output-sha256=b55d23281786ae862073b2707b0a0da47869ba66d663adb4e477a2cc75a67b37; output-bytes=270; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; path=e53232291def/33 entries
 
@@ -109,6 +109,6 @@ rather than only in a conversation.
   EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; origin=https://send.thevinod.lol; browser=Chrome-131-via-SEND_CHROME_PATH; payload=96MiB; checks=withheld-until-warm,percent,time-remaining,throughput,no-placeholder,advances-over-time,completes,no-leftover-countdown,no-page-errors; observed=2m37s-left-at-1.4MB/s; negative-tests=wrong-timestamp-argument-caught,entity-rendering-caught; unit-tests=frontend-39-passing
 
 - [x] G18: expired ciphertext is deleted from disk, and in-flight uploads are never touched
-  CHECK: node scripts/verify/reaper.mjs
+  CHECK: node scripts/verify/remote-run.mjs node scripts/verify/reaper.mjs
   EXPECT: REAPER VERIFIED
   EVIDENCE: pending

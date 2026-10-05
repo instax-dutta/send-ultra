@@ -60,6 +60,46 @@ const {
   port: PORT,
   redisPort: REDIS_PORT
 } = settings;
+/*
+ * Pass the caller's SEND_* knobs through to the remote command.
+ *
+ * A CHECK line is meant to be self-contained, so `SEND_UNIT=... node
+ * scripts/verify/remote-run.mjs ...` has to mean something on the far side.
+ * Only the connection and bootstrap variables are held back: they describe how
+ * to reach this host and would be meaningless, and in the case of a local key
+ * path actively misleading, once they land on a Linux box.
+ */
+const NOT_FORWARDED = new Set([
+  'SEND_SSH_HOST',
+  'SEND_SSH_USER',
+  'SEND_SSH_KEY',
+  'SEND_SSH_PORT',
+  'SEND_REMOTE_DIR',
+  'SEND_REMOTE_REDIS_DIR',
+  'SEND_NO_SYNC',
+  'SEND_SKIP_PREPARE',
+  'SEND_VERIFY_CONFIG'
+]);
+
+function forwardedEnv() {
+  const parts = [];
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!key.startsWith('SEND_') || NOT_FORWARDED.has(key) || !value) {
+      continue;
+    }
+    // Single-quoted so a value with spaces, as paths here often have, survives
+    // the shell on the far side intact.
+    parts.push(`${key}='${value.replace(/'/g, "'\\''")}'`);
+  }
+  /*
+   * No trailing newline, and this must be interpolated as a prefix on the same
+   * line as the command. Emitted on a line of its own it looks equivalent and
+   * is not: `VAR=x` alone sets a shell variable without exporting it, so the
+   * command on the next line starts with no such variable in its environment.
+   */
+  return parts.join(' ');
+}
+
 const REMOTE_DIR = settings.remoteDir;
 const REMOTE_REDIS_DIR =
   process.env.SEND_REMOTE_REDIS_DIR ||
@@ -90,10 +130,16 @@ function fail(msg) {
 }
 
 function sshArgs(command) {
+  /*
+   * `-i` is only supplied when a key is actually configured. Some hosts are
+   * reached over Tailscale SSH, which authenticates against the tailnet and has
+   * no private key at all; passing an empty -i there makes ssh fail before it
+   * ever tries.
+   */
+  const identity = KEY ? ['-i', KEY] : [];
   return [
     'ssh',
-    '-i',
-    KEY,
+    ...identity,
     '-o',
     'BatchMode=yes',
     '-o',
@@ -196,16 +242,16 @@ async function main() {
   if (!command) {
     fail('usage: remote-run.mjs <command>');
   }
+  // No SEND_SSH_KEY in this list: it is optional, for Tailscale SSH.
   for (const [name, value] of Object.entries({
     SEND_SSH_HOST: HOST,
-    SEND_SSH_USER: USER,
-    SEND_SSH_KEY: KEY
+    SEND_SSH_USER: USER
   })) {
     if (!value) {
       fail(`${name} is not set`);
     }
   }
-  if (!fs.existsSync(KEY)) {
+  if (KEY && !fs.existsSync(KEY)) {
     fail(`private key not found: ${KEY}`);
   }
   if (process.env.SEND_NO_SYNC !== '1') {
@@ -219,9 +265,20 @@ async function main() {
    * redis in the background must not detach the rest of the script.
    */
   const redisPort = REDIS_PORT;
+  /*
+   * LC_ALL=C for the whole remote script.
+   *
+   * ssh without a login shell does not set LANG or LC_ALL, and redis 8 refuses
+   * to start when it cannot configure a locale: "Failed to configure LOCALE for
+   * invalid locale name". It exits before binding, so the readiness probe below
+   * reports "redis did not start" and the cause is not visible anywhere. systemd
+   * does supply an environment, which is why the deployed instance never hit this.
+   */
+  const env = 'export LC_ALL=C LANG=C';
   const script = settings.skipPrep
     ? `cd ${REMOTE_DIR}\n`
     : [
+        env,
         `cd ${REMOTE_DIR}`,
         `mkdir -p ${REMOTE_REDIS_DIR}`,
         `if ! redis-cli -p ${redisPort} ping >/dev/null 2>&1; then`,
@@ -231,7 +288,8 @@ async function main() {
         `redis-cli -p ${redisPort} ping >/dev/null 2>&1 || { echo "prepare: redis did not start on ${redisPort}"; exit 1; }`,
         `if [ ! -f dist/manifest.json ]; then npm run build >/dev/null 2>&1 || { echo "prepare: build failed"; exit 1; }; fi`,
         `echo "prepare: redis ${redisPort} up, dist present"`
-      ].join('\n') + `\nREDIS_PORT=${redisPort} ${command}\n`;
+      ].join('\n') +
+      `\n${env}\nREDIS_HOST=127.0.0.1 REDIS_PORT=${redisPort} ${forwardedEnv()} ${command}\n`;
 
   const code = await run(sshArgs(script));
   process.exit(code);

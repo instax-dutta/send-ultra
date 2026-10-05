@@ -80,6 +80,27 @@ for (const [name, when] of [
  */
 const storage = require('../../server/storage');
 const redis = storage.redis;
+
+/*
+ * Refuse to run on redis-mock.
+ *
+ * server/storage/redis.js substitutes an in-process mock whenever redis_host is
+ * localhost and NODE_ENV is not production. This gate writes a key in this
+ * process and then runs the reaper in a child, so with a mock each side sees a
+ * different empty database: the "key is still live" files look orphaned and the
+ * reaper correctly, from its own point of view, deletes them. That is how this
+ * gate first failed while the reaper was behaving correctly.
+ *
+ * Running it against a real Redis is the only way the live-key case means
+ * anything, so say so plainly rather than reporting a misleading result.
+ */
+if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) {
+  process.stderr.write(
+    '  this gate needs a real Redis: run it through remote-run.mjs, or set\n' +
+      '  REDIS_HOST and REDIS_PORT yourself.\n'
+  );
+  process.exit(2);
+}
 const call = (fn, ...args) =>
   new Promise((resolve, reject) =>
     fn.call(redis, ...args, (err, res) => (err ? reject(err) : resolve(res)))
