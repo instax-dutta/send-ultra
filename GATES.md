@@ -69,7 +69,7 @@ Scope: Land the audited correctness/security fixes and the server-side performan
   EXPECT: RENDER BUDGET VERIFIED
   EVIDENCE: automatic-evidence=v1; definition-sha256=df9d5a63ae4c652ea4875c8c280c06ae4dcdd2747399baf502c94f523bfee825; exit=0; EXPECT=matched; output-sha256=05393535a9763855bf5421185a163293fdfc84869b02a410aeb970ef71017233; output-bytes=294; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; path=e53232291def/33 entries
 - [x] G13: the hosted instance completes a full user flow over the public internet
-  CHECK: node scripts/verify/public-flow.mjs http://23.23.142.61
+  CHECK: node scripts/verify/public-flow.mjs https://send.thevinod.lol
   EXPECT: PUBLIC USER FLOW VERIFIED
   EVIDENCE: automatic-evidence=v1; definition-sha256=85025076a46864061f6b3f93a13fb2c6cce01f5c0fb1b4d9d1f835bacd6c0d69; exit=0; EXPECT=matched; output-sha256=c920ca72de82efd75daf5e333c8891d99db8186e857e379aae896d15874e929f; output-bytes=541; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; path=e53232291def/33 entries
 
@@ -79,7 +79,7 @@ Scope: Land the audited correctness/security fixes and the server-side performan
   EVIDENCE: automatic-evidence=v1; definition-sha256=ef0b4de8567e70a615bcb136383ff57202fe9c6060cf25cd889838cbdf1250c5; exit=0; EXPECT=matched; output-sha256=b55d23281786ae862073b2707b0a0da47869ba66d663adb4e477a2cc75a67b37; output-bytes=270; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; path=e53232291def/33 entries
 
 - [x] G15: every redesigned surface renders the Send Ultra shell, with no legacy light panel left behind
-  CHECK: node scripts/verify/ui-surfaces.mjs http://23.23.142.61
+  CHECK: node scripts/verify/ui-surfaces.mjs https://send.thevinod.lol
   EXPECT: UI SURFACES VERIFIED
   EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/sh; cwd=/Users/saiduttaabhishekdash/send-ultra; origin=http://23.23.142.61; surfaces=upload,post-upload-dialog,receiver,complete,error,expired,unsupported; checks-passed=78; browser-checks=sha256-match,qr-toggle-both-ways; bento-check=stage-and-rail-both-rows; negative-tests=inert-qr-toggle-fails,-legacy-blue-fails; note=also-verified-on-Chrome-131-via-SEND_CHROME_PATH
 
