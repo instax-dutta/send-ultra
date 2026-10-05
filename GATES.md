@@ -98,10 +98,12 @@ rather than only in a conversation.
   way, but a link can be intercepted in transit and replayed, and a downgrade
   is possible. Needs a certificate or a tunnel, and therefore a hostname.
   G13 exercises the public flow over HTTP and cannot detect this.
-- **Filesystem storage never deletes expired ciphertext.** Expiry is enforced on
-  read, so an expired link cannot be used, but the bytes stay on disk until an
-  operator sweeps them. `FSStorage.del` is correct and idempotent (G5) and is
-  called on explicit delete; there is no reaper for time-based expiry.
+- ~~**Filesystem storage never deletes expired ciphertext.**~~ Closed by G18 and
+  `send-ultra-reap.timer`. Expiry was previously enforced on read only, so an
+  expired link could not be used but the bytes stayed on disk until an operator
+  swept them by hand. The reaper now runs daily and removes ciphertext that is
+  both past `max_expire_seconds` and absent from Redis, so a live or in-flight
+  upload cannot be collected.
 
 - [x] G17: the transfer readout shows an honest time remaining, and hides itself until it can be trusted
   CHECK: node scripts/verify/transfer-readout.mjs https://send.thevinod.lol
@@ -111,4 +113,4 @@ rather than only in a conversation.
 - [x] G18: expired ciphertext is deleted from disk, and in-flight uploads are never touched
   CHECK: node scripts/verify/remote-run.mjs node scripts/verify/reaper.mjs
   EXPECT: REAPER VERIFIED
-  EVIDENCE: pending
+  EVIDENCE: automatic-evidence=v1; exit=0; EXPECT=matched; shell=/bin/zsh; cwd=/Users/saiduttaabhishekdash/send-ultra; host=tejes@pelican; redis=127.0.0.1:6399-real-not-mock; fixture-dir=/tmp/reap-Ug9vTK; checks=expired-file-removed,old-file-with-live-key-kept,in-flight-upload-kept,recent-file-kept,second-old-file-with-live-key-kept,malformed-name-ignored,second-pass-noop; observed=6-entries-1-removed-4-kept-0-errors; production-run=scanned-32-entries-0-removed-32-kept-age-threshold-608400s; schedule=send-ultra-reap.timer-OnCalendar-*-*-*-04:17:00-RandomizedDelaySec-45m-Persistent-true; systemd-Result=success
