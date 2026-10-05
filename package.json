@@ -25,7 +25,7 @@
     "contributors": "git shortlog -s | awk -F\\t '{print $2}' > CONTRIBUTORS",
     "release": "npm-run-all contributors changelog",
     "test": "npm-run-all test:*",
-    "test:remote": "node scripts/verify/remote-run.mjs npm test",
+    "verify:remote": "node scripts/verify/remote-run.mjs npm test",
     "test:backend": "nyc --reporter=lcovonly mocha --reporter=min test/backend",
     "test:e2e": "mocha --reporter=spec --timeout 60000 test/e2e",
     "test:frontend": "cross-env NODE_ENV=development node test/frontend/runner.js",
@@ -39,7 +39,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "npm run test:remote"
+      "pre-push": "npm run verify:remote"
     }
   },
   "lint-staged": {

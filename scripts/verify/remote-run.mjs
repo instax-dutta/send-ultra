@@ -69,6 +69,25 @@ const {
  * to reach this host and would be meaningless, and in the case of a local key
  * path actively misleading, once they land on a Linux box.
  */
+/*
+ * Refuse to run on the verify host.
+ *
+ * `npm test` is a glob over test:*, so a remote variant named test:something
+ * becomes part of it, and the suite re-enters itself where there is no SSH
+ * config to read -- an error about a missing host, raised on the machine doing
+ * the running, pointing at the wrong process entirely. The marker is set on
+ * every forwarded command, so this catches that class of mistake whatever it is
+ * called rather than only the case that has already happened once.
+ */
+if (process.env.SEND_ON_VERIFY_HOST) {
+  console.error(
+    'remote-run: already on the verify host, refusing to nest.\n' +
+      '  This usually means a remote variant of a suite was named so that a\n' +
+      '  glob like test:* picked it up and it invoked itself.\n'
+  );
+  process.exit(2);
+}
+
 const NOT_FORWARDED = new Set([
   'SEND_SSH_HOST',
   'SEND_SSH_USER',
@@ -78,7 +97,8 @@ const NOT_FORWARDED = new Set([
   'SEND_REMOTE_REDIS_DIR',
   'SEND_NO_SYNC',
   'SEND_SKIP_PREPARE',
-  'SEND_VERIFY_CONFIG'
+  'SEND_VERIFY_CONFIG',
+  'SEND_ON_VERIFY_HOST'
 ]);
 
 function forwardedEnv() {
@@ -297,7 +317,7 @@ async function main() {
         `if [ ! -f dist/manifest.json ]; then npm run build >/dev/null 2>&1 || { echo "prepare: build failed"; exit 1; }; fi`,
         `echo "prepare: redis ${redisPort} up, dist present"`
       ].join('\n') +
-      `\n${env}\nREDIS_HOST=127.0.0.1 REDIS_PORT=${redisPort} ${forwardedEnv()} ${command}\n`;
+      `\n${env}\nSEND_ON_VERIFY_HOST=1 REDIS_HOST=127.0.0.1 REDIS_PORT=${redisPort} ${forwardedEnv()} ${command}\n`;
 
   const code = await run(sshArgs(script));
   process.exit(code);
