@@ -4,6 +4,7 @@ import Keychain from './keychain';
 import { arrayToB64, bytes } from './utils';
 import { uploadWs } from './api';
 import { encryptedSize } from './utils';
+import { TransferTiming } from './transferTiming';
 
 export default class FileSender extends Nanobus {
   constructor() {
@@ -22,6 +23,16 @@ export default class FileSender extends Nanobus {
     );
   }
 
+  /* Seconds left, or null while there is not enough signal to be honest. */
+  get progressEta() {
+    return this.timing.eta(this.progress[0], this.progress[1]);
+  }
+
+  /* Bytes per second over the whole transfer, 0 while unmeasurable. */
+  get progressRate() {
+    return this.timing.rate(this.progress[0], this.progress[1]);
+  }
+
   get sizes() {
     return {
       partialSize: bytes(this.progress[0]),
@@ -34,6 +45,7 @@ export default class FileSender extends Nanobus {
     this.msg = 'importingFile';
     this.progress = [0, 1];
     this.cancelled = false;
+    this.timing = new TransferTiming();
   }
 
   cancel() {
@@ -63,6 +75,7 @@ export default class FileSender extends Nanobus {
       bearerToken,
       p => {
         this.progress = [p, totalSize];
+        this.timing.update(p, totalSize);
         this.emit('progress');
       }
     );

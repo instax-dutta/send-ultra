@@ -16,6 +16,10 @@ unlockButtonLabel = Unlock
 downloadButtonLabel = Download
 downloadFinish = Download complete
 fileSizeProgress = ({ $partialSize } of { $totalSize })
+
+# Transfer readout. Shown while uploading or downloading.
+transferEstimating = estimating…
+transferRemaining = { $time } left
 sendYourFilesLink = Try Send
 errorPageHeader = Something went wrong!
 fileTooBig = That file is too big to upload. It should be less than { $size }

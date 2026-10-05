@@ -52,8 +52,17 @@ const server = app.listen(async function() {
       );
     }
     const stats = results.stats;
-    exitCode = stats.failures;
+    const loadFailures = await page.evaluate(
+      () => window.__suiteLoadFailures || []
+    );
+    exitCode = stats.failures + loadFailures.length;
     console.log(`${stats.passes} passing (${stats.duration}ms)\n`);
+    if (loadFailures.length) {
+      console.log(`Files that could not load (${loadFailures.length}):\n`);
+      for (const f of loadFailures) {
+        console.log(`  ${f.file}: ${f.message}\n`);
+      }
+    }
     if (stats.failures) {
       console.log('Failures:\n');
       for (const f of results.failures) {

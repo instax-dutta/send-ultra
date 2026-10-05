@@ -12,6 +12,7 @@ const {
   timeLeft
 } = require('../utils');
 const expiryOptions = require('./expiryOptions');
+const { formatDuration } = require('../transferTiming');
 const eyebrow = require('./eyebrow');
 const glyphs = require('./glyphs');
 
@@ -147,6 +148,55 @@ function password(state) {
       el.placeholder = '';
     }
   }
+}
+
+/*
+ * Percent on the left, time remaining and throughput on the right.
+ *
+ * Shows a placeholder rather than a number until there is enough signal to be
+ * honest: an estimate computed from the first second of a connection is mostly
+ * TCP slow start and reads as "2s left" for a forty minute transfer.
+ */
+function transferReadout(state) {
+  const ratio = state.transfer.progressRatio;
+  const pct = percent(ratio);
+  const eta = state.transfer.progressEta;
+  const rate = state.transfer.progressRate;
+
+  const remaining =
+    eta === null || eta === undefined
+      ? html`
+          <span class="su-readout-pending">
+            ${state.translate('transferEstimating')}
+          </span>
+        `
+      : html`
+          <span>
+            ${state.translate('transferRemaining', {
+              time: formatDuration(eta)
+            })}
+          </span>
+        `;
+
+  const speed =
+    rate > 0
+      ? html`
+          <span>${bytes(rate)}/s</span>
+        `
+      : html`
+          <span class="su-readout-pending">&mdash;</span>
+        `;
+
+  return html`
+    <div class="su-readout">
+      <span class="su-readout-value">${pct}</span>
+      <span class="su-readout-meta">
+        ${remaining}
+        <span class="su-readout-sep">&middot;</span>
+        ${speed}
+      </span>
+    </div>
+  `;
 }
 
 function fileInfo(file, action) {
@@ -459,7 +509,7 @@ module.exports.uploading = function(state, emit) {
             expiresAt: Date.now() + 500 + state.archive.timeLimit * 1000
           })}
         </p>
-        <p class="su-progress-value su-mt-6">${progressPercent}</p>
+        ${transferReadout(state)}
         <progress class="su-progress" value="${progress}">
           ${progressPercent}
         </progress>
@@ -663,13 +713,7 @@ module.exports.downloading = function(state) {
   return html`
     <send-archive class="su-shell su-w-full su-mt-8 su-enter-sm">
       <div class="su-core su-card">
-        ${archiveInfo(archive)}
-        <p class="su-progress-value su-mt-6">
-          ${progressPercent}
-          <span class="su-mono su-muted">
-            ${state.translate('decryptingFile')}
-          </span>
-        </p>
+        ${archiveInfo(archive)} ${transferReadout(state)}
         <progress class="su-progress" value="${progress}"
           >${progressPercent}</progress
         >

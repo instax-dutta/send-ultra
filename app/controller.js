@@ -34,6 +34,36 @@ export default function(state, emitter) {
     render();
   }
 
+  /*
+   * Keeps the "time remaining" readout counting down.
+   *
+   * Progress events already re-render on every chunk, but chunks stop arriving
+   * on a stalled connection, which would leave the countdown frozen on a number
+   * that looks broken. One re-render per second is cheap and only runs while a
+   * transfer is live.
+   */
+  let etaTicker = null;
+
+  function startEtaTicker() {
+    if (etaTicker !== null) {
+      return;
+    }
+    etaTicker = setInterval(() => {
+      if (!state.transfer) {
+        stopEtaTicker();
+        return;
+      }
+      render();
+    }, 1000);
+  }
+
+  function stopEtaTicker() {
+    if (etaTicker !== null) {
+      clearInterval(etaTicker);
+      etaTicker = null;
+    }
+  }
+
   emitter.on('DOMContentLoaded', () => {
     document.addEventListener('blur', () => (updateTitle = true));
     document.addEventListener('focus', () => {
@@ -146,6 +176,7 @@ export default function(state, emitter) {
     sender.on('complete', render);
     state.transfer = sender;
     state.uploading = true;
+    startEtaTicker();
     render();
 
     const links = openLinksInNewTab();
@@ -191,6 +222,7 @@ export default function(state, emitter) {
       archive.clear();
       state.uploading = false;
       state.transfer = null;
+      stopEtaTicker();
       await state.user.syncFileList();
       render();
     }
@@ -240,6 +272,7 @@ export default function(state, emitter) {
     state.transfer.on('decrypting', render);
     state.transfer.on('complete', render);
     const links = openLinksInNewTab();
+    startEtaTicker();
     try {
       const dl = state.transfer.download({
         stream: state.capabilities.streamDownload
@@ -269,6 +302,9 @@ export default function(state, emitter) {
       }
     } finally {
       openLinksInNewTab(links, false);
+      // The receiver object survives a cancel so the user can retry, so the
+      // ticker is stopped rather than left to notice a null transfer.
+      stopEtaTicker();
     }
   });
 

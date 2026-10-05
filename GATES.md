@@ -102,3 +102,8 @@ rather than only in a conversation.
   read, so an expired link cannot be used, but the bytes stay on disk until an
   operator sweeps them. `FSStorage.del` is correct and idempotent (G5) and is
   called on explicit delete; there is no reaper for time-based expiry.
+
+- [x] G17: the transfer readout shows an honest time remaining, and hides itself until it can be trusted
+  CHECK: node scripts/verify/transfer-readout.mjs https://send.thevinod.lol
+  EXPECT: TRANSFER READOUT VERIFIED
+  EVIDENCE: pending

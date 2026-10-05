@@ -3,6 +3,7 @@ import Keychain from './keychain';
 import { delay, bytes, streamToArrayBuffer } from './utils';
 import { downloadFile, metadata, getApiUrl, reportLink } from './api';
 import { blobStream } from './streams';
+import { TransferTiming } from './transferTiming';
 import Zip from './zip';
 
 export default class FileReceiver extends Nanobus {
@@ -24,6 +25,16 @@ export default class FileReceiver extends Nanobus {
     return this.state !== 'downloading';
   }
 
+  /* Seconds left, or null while there is not enough signal to be honest. */
+  get progressEta() {
+    return this.timing.eta(this.progress[0], this.progress[1]);
+  }
+
+  /* Bytes per second over the whole transfer, 0 while unmeasurable. */
+  get progressRate() {
+    return this.timing.rate(this.progress[0], this.progress[1]);
+  }
+
   get sizes() {
     return {
       partialSize: bytes(this.progress[0]),
@@ -41,6 +52,7 @@ export default class FileReceiver extends Nanobus {
     this.msg = 'fileSizeProgress';
     this.state = 'initialized';
     this.progress = [0, 1];
+    this.timing = new TransferTiming();
   }
 
   async getMetadata() {
@@ -82,6 +94,7 @@ export default class FileReceiver extends Nanobus {
       this.keychain,
       p => {
         this.progress = [p, this.fileInfo.size];
+        this.timing.update(p, this.fileInfo.size);
         this.emit('progress');
       }
     );
@@ -119,6 +132,7 @@ export default class FileReceiver extends Nanobus {
     const start = Date.now();
     const onprogress = p => {
       this.progress = [p, this.fileInfo.size];
+      this.timing.update(p, this.fileInfo.size);
       this.emit('progress');
     };
 

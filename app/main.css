@@ -1882,6 +1882,46 @@ select {
 }
 
 /* ------------------------------------------------------------------ *
+ * Transfer readout: percent, remaining time and throughput.
+ * ------------------------------------------------------------------ */
+
+.su-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.su-readout-value {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #f4f4f7;
+}
+
+/* Placeholder while the estimate warms up. Reserves the same space as a real
+   value so the layout does not jump when the first estimate appears. */
+.su-readout-pending {
+  color: rgb(255 255 255 / 28%);
+}
+
+.su-readout-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 45%);
+  text-align: right;
+}
+
+.su-readout-sep {
+  color: rgb(255 255 255 / 20%);
+}
+
+/* ------------------------------------------------------------------ *
  * Receiver and terminal surfaces: download preview, transfer progress,
  * password unlock, expiry pickers, expired/error/complete states.
  * ------------------------------------------------------------------ */
